@@ -4,6 +4,41 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import pool from "@/lib/db";
 
+/**
+ * @swagger
+ * /api/stories:
+ *   get:
+ *     summary: Lấy danh sách truyện của người dùng
+ *     description: Trả về danh sách tất cả truyện thuộc về người dùng hiện tại
+ *     tags:
+ *       - Stories
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách truyện
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stories:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Story'
+ *       401:
+ *         description: Không có quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -15,10 +50,10 @@ export async function GET() {
     }
 
     // Lấy user_id từ email
-    const [users] = await pool.execute(
-      'SELECT user_id FROM users WHERE email = ?',
+    const [users] = (await pool.execute(
+      "SELECT user_id FROM users WHERE email = ?",
       [session.user.email]
-    ) as any[];
+    )) as any[];
 
     if (!users.length) {
       return NextResponse.json({ stories: [] });
@@ -27,7 +62,8 @@ export async function GET() {
     const userId = users[0].user_id;
 
     // Lấy danh sách truyện
-    const [stories] = await pool.execute(`
+    const [stories] = (await pool.execute(
+      `
       SELECT 
         s.story_id,
         s.title,
@@ -47,13 +83,15 @@ export async function GET() {
       WHERE s.user_id = ?
       GROUP BY s.story_id
       ORDER BY s.updated_at DESC
-    `, [userId]) as any[];
+    `,
+      [userId]
+    )) as any[];
 
     // Format lại dữ liệu
     const formattedStories = stories.map((story: any) => ({
       ...story,
-      tags: story.tags ? story.tags.split(',') : [],
-      favorite_count: Number(story.favorite_count)
+      tags: story.tags ? story.tags.split(",") : [],
+      favorite_count: Number(story.favorite_count),
     }));
 
     return NextResponse.json({ stories: formattedStories });
@@ -64,4 +102,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}

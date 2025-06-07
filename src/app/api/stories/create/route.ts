@@ -1,10 +1,75 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";;
+import { authOptions } from "@/lib/auth";
 import pool from "@/lib/db";
 import { GoogleDriveService } from "@/services/google-drive.service";
 
+/**
+ * @swagger
+ * /api/stories/create:
+ *   post:
+ *     summary: Tạo truyện mới
+ *     description: Tạo một truyện mới với thông tin cơ bản, ảnh bìa và tags
+ *     tags:
+ *       - Stories
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Tiêu đề truyện
+ *               description:
+ *                 type: string
+ *                 description: Mô tả truyện
+ *               mainCategoryId:
+ *                 type: string
+ *                 description: ID thể loại chính
+ *               tagIds:
+ *                 type: string
+ *                 description: JSON array của tag IDs
+ *               coverImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: File ảnh bìa
+ *             required:
+ *               - title
+ *               - description
+ *               - mainCategoryId
+ *               - tagIds
+ *     responses:
+ *       201:
+ *         description: Tạo truyện thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Thông báo thành công
+ *                 storyId:
+ *                   type: integer
+ *                   description: ID truyện vừa tạo
+ *       401:
+ *         description: Không có quyền truy cập
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Lỗi server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,17 +81,17 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const mainCategoryId = formData.get('mainCategoryId') as string;
-    const tagIds = JSON.parse(formData.get('tagIds') as string);
-    const coverImage = formData.get('coverImage') as File;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const mainCategoryId = formData.get("mainCategoryId") as string;
+    const tagIds = JSON.parse(formData.get("tagIds") as string);
+    const coverImage = formData.get("coverImage") as File;
 
     // Lấy user_id từ email
-    const [users] = await pool.execute(
-      'SELECT user_id FROM users WHERE email = ?',
+    const [users] = (await pool.execute(
+      "SELECT user_id FROM users WHERE email = ?",
       [session.user.email]
-    ) as any[];
+    )) as any[];
 
     const userId = users[0].user_id;
     const connection = await pool.getConnection();
@@ -35,7 +100,7 @@ export async function POST(request: Request) {
       await connection.beginTransaction();
 
       // Tạo truyện mới với main_category_id
-      const [result] = await connection.execute(
+      const [result] = (await connection.execute(
         `INSERT INTO stories (
           user_id, 
           title, 
@@ -44,7 +109,7 @@ export async function POST(request: Request) {
           status
         ) VALUES (?, ?, ?, ?, 'draft')`,
         [userId, title, description, mainCategoryId]
-      ) as any;
+      )) as any;
 
       const storyId = result.insertId;
 
@@ -55,7 +120,7 @@ export async function POST(request: Request) {
           buffer,
           coverImage.type,
           userId,
-          'cover',
+          "cover",
           storyId
         );
 
@@ -71,7 +136,7 @@ export async function POST(request: Request) {
       // Thêm các tag
       for (const tagId of tagIds) {
         await connection.execute(
-          'INSERT INTO story_tag_relations (story_id, tag_id) VALUES (?, ?)',
+          "INSERT INTO story_tag_relations (story_id, tag_id) VALUES (?, ?)",
           [storyId, tagId]
         );
       }
@@ -95,4 +160,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
