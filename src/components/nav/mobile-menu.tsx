@@ -1,24 +1,24 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+"use client";
 
-import * as React from "react"
-import clsx from 'clsx'
-import { Sun, Moon, ChevronRight, Search } from 'lucide-react'
-import { NavItem } from "./types"
-import { useSession } from "next-auth/react"
-import { Login } from "../login/login"
-import { UserMenu } from "./user-menu"
+import * as React from "react";
+import clsx from "clsx";
+import { Sun, Moon, ChevronRight, Search } from "lucide-react";
+import { NavItem } from "./types";
+import { useSession } from "next-auth/react";
+import { Login } from "../login/login";
+import { UserMenu } from "./user-menu";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
-import { useRouter } from 'next/navigation'
-import { useLoading } from "@/providers/loading-provider"
-import { NotificationBell } from "@/components/notification-bell"
-import { SearchDialog } from "@/components/search-dialog"
+} from "@/components/ui/sheet";
+import { useRouter } from "next/navigation";
+import { useLoading } from "@/providers/loading-provider";
+import { NotificationBell } from "@/components/notification-bell";
+import { SearchDialog } from "@/components/search-dialog";
 
 interface MobileMenuProps {
   items?: NavItem[];
@@ -32,21 +32,23 @@ const MobileMenuItem: React.FC<{
   isDarkTheme?: boolean;
   onClose?: () => void;
 }> = ({ item, isDarkTheme, onClose }) => {
-  const router = useRouter()
-  const [isOpen, setIsOpen] = React.useState(item.items && item.items.length > 0)
-  const { startLoading } = useLoading()
+  const router = useRouter();
+  const [isOpen, setIsOpen] = React.useState(
+    item.items && item.items.length > 0
+  );
+  const { startLoading } = useLoading();
 
   const handleNavigation = (to?: string) => {
     if (to) {
-      startLoading(to)
-      router.push(to)
-      onClose?.()
+      startLoading(to);
+      router.push(to);
+      onClose?.();
     }
-  }
+  };
 
   if (item.to) {
     return (
-      <button 
+      <button
         onClick={() => handleNavigation(item.to)}
         className={clsx(
           "flex items-center w-full px-4 py-4",
@@ -54,30 +56,31 @@ const MobileMenuItem: React.FC<{
           "hover:bg-gray-100 dark:hover:bg-[#1C1D21]",
           "active:bg-gray-200 dark:active:bg-[#2C2D31]",
           "transition-colors duration-100",
-          isDarkTheme ? 'text-white' : 'text-gray-900'
+          isDarkTheme ? "text-white" : "text-gray-900"
         )}
       >
         <span className="flex-1 text-left">{item.text}</span>
         <ChevronRight className="h-4 w-4 text-gray-400" />
       </button>
-    )
+    );
   }
-  
+
   return (
     <div className="w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "flex w-full items-center justify-between px-4 py-4",
+          "flex w-full items-center justify-between px-4 py-4 rounded-xl",
           "text-base font-semibold tracking-tight",
-          "hover:bg-gray-100 dark:hover:bg-[#1C1D21]",
-          "active:bg-gray-200 dark:active:bg-[#2C2D31]",
-          "transition-colors duration-100",
-          isDarkTheme ? 'text-white' : 'text-gray-900'
+          "hover:bg-blue-50 dark:hover:bg-slate-800/50",
+          "hover:text-blue-600 dark:hover:text-blue-400",
+          "active:bg-blue-100 dark:active:bg-slate-700/50",
+          "transition-all duration-300",
+          isDarkTheme ? "text-white" : "text-gray-700"
         )}
       >
         <span className="text-left">{item.text}</span>
-        <ChevronRight 
+        <ChevronRight
           className={clsx(
             "h-5 w-5 transition-transform duration-200",
             !isOpen && "text-gray-400",
@@ -86,21 +89,24 @@ const MobileMenuItem: React.FC<{
         />
       </button>
       {isOpen && (
-        <div className="w-full bg-gray-50 dark:bg-[#0B0C0F]">
+        <div className="w-full bg-gray-50 dark:bg-slate-800/30 px-2">
           {item.items?.map((subItem, index) => (
             <button
               key={index}
               onClick={() => handleNavigation(subItem.to)}
               className={clsx(
-                "flex items-center w-full px-6 py-4",
-                "hover:bg-gray-100 dark:hover:bg-[#1C1D21]",
-                "active:bg-gray-200 dark:active:bg-[#2C2D31]",
-                "transition-colors duration-100",
-                isDarkTheme ? 'text-white' : 'text-gray-900'
+                "flex items-center w-full px-4 py-4 rounded-xl",
+                "hover:bg-blue-50 dark:hover:bg-slate-800/50",
+                "hover:text-blue-600 dark:hover:text-blue-400",
+                "active:bg-blue-100 dark:active:bg-slate-700/50",
+                "transition-all duration-300",
+                isDarkTheme ? "text-white" : "text-gray-700"
               )}
             >
               <div className="flex-1">
-                <div className="text-base font-semibold tracking-tight text-left">{subItem.text}</div>
+                <div className="text-base font-semibold tracking-tight text-left">
+                  {subItem.text}
+                </div>
                 {subItem.description && (
                   <div className="mt-1 text-sm font-medium text-gray-600 dark:text-gray-400 text-left">
                     {subItem.description}
@@ -113,8 +119,8 @@ const MobileMenuItem: React.FC<{
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
   items = [],
@@ -122,13 +128,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onThemeChange,
   logo,
 }) => {
-  const { data: session } = useSession()
-  const [open, setOpen] = React.useState(false)
-  const [searchOpen, setSearchOpen] = React.useState(false)
+  const { data: session } = useSession();
+  const [open, setOpen] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
 
   const handleCloseMenu = () => {
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   return (
     <>
@@ -138,20 +144,30 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           <button
             className={clsx(
               "lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md",
-              isDarkTheme ? 'text-white' : 'text-gray-900'
+              isDarkTheme ? "text-white" : "text-gray-900"
             )}
           >
             <span className="sr-only">Open menu</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </SheetTrigger>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className={clsx(
-            "w-full max-w-sm p-0 flex flex-col",
-            isDarkTheme ? 'bg-[#0B0C0F]' : 'bg-white'
+            "w-full max-w-sm p-0 flex flex-col overflow-x-hidden",
+            isDarkTheme ? "bg-slate-900" : "bg-white"
           )}
         >
           <SheetHeader className="p-6 border-b border-gray-200 dark:border-gray-800">
@@ -159,20 +175,20 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               {logo}
             </SheetTitle>
           </SheetHeader>
-          
+
           <div className="flex-1 overflow-y-auto">
             {session && (
               <div className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-800">
                 <button
                   onClick={() => {
-                    setSearchOpen(true)
-                    handleCloseMenu()
+                    setSearchOpen(true);
+                    handleCloseMenu();
                   }}
                   className={clsx(
                     "flex items-center justify-between px-4 py-3 rounded-lg flex-1",
                     "text-base font-semibold tracking-tight",
                     "hover:bg-gray-100 dark:hover:bg-[#1C1D21]",
-                    isDarkTheme ? 'text-white' : 'text-gray-900'
+                    isDarkTheme ? "text-white" : "text-gray-900"
                   )}
                 >
                   <span>Tìm kiếm</span>
@@ -184,9 +200,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
             <div className="py-2">
               {items.map((item: NavItem, index: number) => (
-                <MobileMenuItem 
-                  key={index} 
-                  item={item} 
+                <MobileMenuItem
+                  key={index}
+                  item={item}
                   isDarkTheme={isDarkTheme}
                   onClose={handleCloseMenu}
                 />
@@ -196,10 +212,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
           <div className="border-t border-gray-200 dark:border-gray-800 p-6 space-y-4">
             {session ? (
-              <UserMenu 
-                isDarkTheme={isDarkTheme} 
-                isMobile={true} 
-                onMobileMenuClose={handleCloseMenu} 
+              <UserMenu
+                isDarkTheme={isDarkTheme}
+                isMobile={true}
+                onMobileMenuClose={handleCloseMenu}
               />
             ) : (
               <Login />
@@ -210,22 +226,28 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   "flex w-full items-center justify-between px-4 py-3 rounded-lg",
                   "text-base font-semibold tracking-tight",
                   "hover:bg-gray-100 dark:hover:bg-[#1C1D21]",
-                  isDarkTheme ? 'text-white' : 'text-gray-900'
+                  isDarkTheme ? "text-white" : "text-gray-900"
                 )}
                 onClick={onThemeChange}
               >
-                <span>
-                  {isDarkTheme ? 'Chế độ sáng' : 'Chế độ tối'}
-                </span>
+                <span>{isDarkTheme ? "Chế độ sáng" : "Chế độ tối"}</span>
                 <div className="relative w-5 h-5">
-                  <Sun className={clsx(
-                    "h-5 w-5 absolute transition-transform duration-100",
-                    isDarkTheme ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'
-                  )} />
-                  <Moon className={clsx(
-                    "h-5 w-5 absolute transition-transform duration-100",
-                    isDarkTheme ? 'opacity-0 -rotate-90' : 'opacity-100 rotate-0'
-                  )} />
+                  <Sun
+                    className={clsx(
+                      "h-5 w-5 absolute transition-transform duration-100",
+                      isDarkTheme
+                        ? "opacity-100 rotate-0"
+                        : "opacity-0 rotate-90"
+                    )}
+                  />
+                  <Moon
+                    className={clsx(
+                      "h-5 w-5 absolute transition-transform duration-100",
+                      isDarkTheme
+                        ? "opacity-0 -rotate-90"
+                        : "opacity-100 rotate-0"
+                    )}
+                  />
                 </div>
               </button>
             )}
@@ -233,5 +255,5 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         </SheetContent>
       </Sheet>
     </>
-  )
-} 
+  );
+};

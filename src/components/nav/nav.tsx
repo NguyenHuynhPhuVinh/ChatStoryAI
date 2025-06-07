@@ -54,10 +54,6 @@ const menuItems = [
     ],
   },
   {
-    text: "Giá cả",
-    to: "/products",
-  },
-  {
     text: "Hướng dẫn",
     items: [
       {
@@ -114,9 +110,7 @@ const Nav = () => {
           logo={
             <button
               onClick={handleLogoClick}
-              className={`text-xl font-bold ${
-                theme === "dark" ? "text-white" : "text-black"
-              }`}
+              className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300"
             >
               ChatStoryAI
             </button>
@@ -124,7 +118,7 @@ const Nav = () => {
           menuItems={menuItems}
           onThemeChange={toggleTheme}
           isSticky={true}
-          withBorder={true}
+          isStickyOverlay={true}
           rightContent={
             <div className="flex items-center gap-2">
               <Button

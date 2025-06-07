@@ -1,109 +1,150 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { ChatBubble } from "@/components/ui/chat-bubble"
-import { Badge } from "@/components/ui/badge"
-import { 
-  MessageCircle, 
-  Sparkles, 
-  ArrowRight, 
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ChatBubble } from "@/components/ui/chat-bubble";
+import { Badge } from "@/components/ui/badge";
+import {
+  MessageCircle,
+  Sparkles,
+  ArrowRight,
   BookOpen,
   Users,
   Zap,
-  Heart
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useLoading } from "@/providers/loading-provider"
+  Heart,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useLoading } from "@/providers/loading-provider";
 
 const ctaMessages = [
   {
     id: 1,
     message: "Sẵn sàng bắt đầu hành trình sáng tạo của bạn chưa? 🚀",
     isUser: false,
-    delay: 0
+    delay: 0,
   },
   {
     id: 2,
     message: "Tôi đã sẵn sàng! Hãy giúp tôi viết câu chuyện đầu tiên nhé!",
     isUser: true,
-    delay: 2
+    delay: 2,
   },
   {
     id: 3,
     message: "Tuyệt vời! Hãy bắt đầu ngay thôi! ✨",
     isUser: false,
-    delay: 4
-  }
-]
+    delay: 4,
+  },
+];
 
 const features = [
   {
     icon: MessageCircle,
     title: "Trò chuyện tự nhiên",
-    description: "Như bạn bè thật"
+    description: "Như bạn bè thật",
   },
   {
     icon: Sparkles,
     title: "AI thông minh",
-    description: "Hiểu ý tưởng của bạn"
+    description: "Hiểu ý tưởng của bạn",
   },
   {
     icon: BookOpen,
     title: "Thư viện phong phú",
-    description: "Hàng nghìn mẫu truyện"
+    description: "Hàng nghìn mẫu truyện",
   },
   {
     icon: Users,
     title: "Cộng đồng sôi động",
-    description: "Chia sẻ và học hỏi"
-  }
-]
+    description: "Chia sẻ và học hỏi",
+  },
+];
 
 export function ChatCTA() {
-  const router = useRouter()
-  const { startLoading } = useLoading()
-  const [visibleMessages, setVisibleMessages] = useState<number[]>([])
-  const [showDemo, setShowDemo] = useState(false)
+  const router = useRouter();
+  const { startLoading } = useLoading();
+  const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
+  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setShowDemo(true)
+      setShowDemo(true);
       ctaMessages.forEach((msg) => {
         setTimeout(() => {
-          setVisibleMessages(prev => [...prev, msg.id])
-        }, msg.delay * 1000)
-      })
-    }, 1000)
+          setVisibleMessages((prev) => [...prev, msg.id]);
+        }, msg.delay * 1000);
+      });
+    }, 1000);
 
-    return () => clearTimeout(timer)
-  }, [])
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-pink-900/20" />
-      
-      {/* Floating Elements */}
+
+      {/* Interactive Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+            className="absolute"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [0, -30, 0],
-              opacity: [0.3, 0.8, 0.3],
-              scale: [1, 1.2, 1]
+              x: [0, 50, -30, 20, 0],
+              y: [0, -40, 30, -20, 0],
+              rotate: [0, 180, 360],
+              scale: [1, 1.5, 0.8, 1.2, 1],
+              opacity: [0.2, 0.8, 0.4, 0.9, 0.2],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: 8 + Math.random() * 4,
               repeat: Infinity,
-              delay: Math.random() * 2
+              ease: "easeInOut",
+              delay: Math.random() * 3,
+            }}
+          >
+            {i % 4 === 0 ? (
+              <div className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-sm" />
+            ) : i % 4 === 1 ? (
+              <div className="w-6 h-6 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full blur-md" />
+            ) : i % 4 === 2 ? (
+              <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full" />
+            ) : (
+              <div className="w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full blur-sm" />
+            )}
+          </motion.div>
+        ))}
+
+        {/* Larger Morphing Shapes */}
+        {[...Array(4)].map((_, i) => (
+          <motion.div
+            key={`shape-${i}`}
+            className="absolute rounded-full blur-3xl opacity-10"
+            style={{
+              background: `linear-gradient(45deg, ${
+                ["#3B82F6", "#8B5CF6", "#F59E0B", "#10B981"][i]
+              }, transparent)`,
+              width: `${150 + Math.random() * 100}px`,
+              height: `${150 + Math.random() * 100}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              scale: [1, 1.3, 0.7, 1.1, 1],
+              rotate: [0, 90, 180, 270, 360],
+              x: [0, 100, -50, 30, 0],
+              y: [0, -80, 60, -30, 0],
+            }}
+            transition={{
+              duration: 12 + Math.random() * 6,
+              repeat: Infinity,
+              ease: "easeInOut",
             }}
           />
         ))}
@@ -111,7 +152,6 @@ export function ChatCTA() {
 
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -121,11 +161,14 @@ export function ChatCTA() {
             className="space-y-8"
           >
             <div>
-              <Badge variant="outline" className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-blue-200 dark:from-blue-900/20 dark:to-purple-900/20 dark:text-blue-300 dark:border-blue-700">
+              <Badge
+                variant="outline"
+                className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-blue-200 dark:from-blue-900/20 dark:to-purple-900/20 dark:text-blue-300 dark:border-blue-700"
+              >
                 <Heart className="w-3 h-3 mr-1 text-red-500" />
                 Tham Gia Ngay
               </Badge>
-              
+
               <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Bắt Đầu Viết Truyện
@@ -133,10 +176,10 @@ export function ChatCTA() {
                 <br />
                 <span className="text-foreground">Ngay Hôm Nay</span>
               </h2>
-              
+
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Tham gia cùng hàng nghìn tác giả đã tin tưởng ChatStory AI. 
-                Biến ý tưởng của bạn thành những câu chuyện tuyệt vời!
+                Tham gia cùng hàng nghìn tác giả đã tin tưởng ChatStory AI. Biến
+                ý tưởng của bạn thành những câu chuyện tuyệt vời!
               </p>
             </div>
 
@@ -156,7 +199,9 @@ export function ChatCTA() {
                   </div>
                   <div>
                     <div className="font-semibold text-sm">{feature.title}</div>
-                    <div className="text-xs text-muted-foreground">{feature.description}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {feature.description}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -170,26 +215,26 @@ export function ChatCTA() {
               viewport={{ once: true }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
                 onClick={() => {
-                  startLoading('/stories')
-                  router.push('/stories')
+                  startLoading("/stories");
+                  router.push("/stories");
                 }}
               >
                 <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                 Bắt Đầu Ngay
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              
-              <Button 
-                size="lg" 
+
+              <Button
+                size="lg"
                 variant="outline"
                 className="border-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 group"
                 onClick={() => {
-                  startLoading('/library/new')
-                  router.push('/library/new')
+                  startLoading("/library/new");
+                  router.push("/library/new");
                 }}
               >
                 <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
@@ -247,17 +292,18 @@ export function ChatCTA() {
                 {showDemo ? (
                   <div className="space-y-4">
                     <AnimatePresence>
-                      {ctaMessages.map((msg) => (
-                        visibleMessages.includes(msg.id) && (
-                          <ChatBubble
-                            key={msg.id}
-                            message={msg.message}
-                            isUser={msg.isUser}
-                            name={msg.isUser ? "Bạn" : "ChatStory AI"}
-                            delay={0}
-                          />
-                        )
-                      ))}
+                      {ctaMessages.map(
+                        (msg) =>
+                          visibleMessages.includes(msg.id) && (
+                            <ChatBubble
+                              key={msg.id}
+                              message={msg.message}
+                              isUser={msg.isUser}
+                              name={msg.isUser ? "Bạn" : "ChatStory AI"}
+                              delay={0}
+                            />
+                          )
+                      )}
                     </AnimatePresence>
                   </div>
                 ) : (
@@ -299,5 +345,5 @@ export function ChatCTA() {
         </div>
       </div>
     </section>
-  )
+  );
 }

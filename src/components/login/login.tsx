@@ -28,7 +28,7 @@ function Login() {
   const [showRegister, setShowRegister] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleSwitchToRegister = () => {
@@ -51,16 +51,16 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      email: String(formData.get('email')),
-      password: String(formData.get('password')),
+      email: String(formData.get("email")),
+      password: String(formData.get("password")),
     };
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         remember: rememberMe.toString(),
@@ -71,7 +71,7 @@ function Login() {
         throw new Error(result.error);
       }
 
-      toast.success('Đăng nhập thành công!');
+      toast.success("Đăng nhập thành công!");
       setShowLogin(false);
       window.location.reload();
     } catch (err: any) {
@@ -84,9 +84,9 @@ function Login() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signIn('google', { callbackUrl: window.location.origin });
+      await signIn("google", { callbackUrl: window.location.origin });
     } catch (error) {
-      toast.error('Đã có lỗi xảy ra khi đăng nhập với Google');
+      toast.error("Đã có lỗi xảy ra khi đăng nhập với Google");
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +101,9 @@ function Login() {
         <DialogContent>
           <div className="flex flex-col items-center gap-2">
             <DialogHeader>
-              <DialogTitle className="sm:text-center">Chào mừng trở lại</DialogTitle>
+              <DialogTitle className="sm:text-center">
+                Chào mừng trở lại
+              </DialogTitle>
               <DialogDescription className="sm:text-center">
                 Vui lòng nhập thông tin để đăng nhập.
               </DialogDescription>
@@ -115,12 +117,12 @@ function Login() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor={`${id}-email`}>Email</Label>
-                <Input 
-                  id={`${id}-email`} 
+                <Input
+                  id={`${id}-email`}
                   name="email"
-                  placeholder="email@example.com" 
-                  type="email" 
-                  required 
+                  placeholder="email@example.com"
+                  type="email"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -136,26 +138,31 @@ function Login() {
             </div>
             <div className="flex justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Checkbox 
+                <Checkbox
                   id={`${id}-remember`}
                   checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
+                  }
                 />
-                <Label htmlFor={`${id}-remember`} className="font-normal text-muted-foreground">
+                <Label
+                  htmlFor={`${id}-remember`}
+                  className="font-normal text-muted-foreground"
+                >
                   Ghi nhớ đăng nhập
                 </Label>
               </div>
-              <Button 
+              <Button
                 type="button"
-                variant="link" 
-                className="text-sm p-0" 
+                variant="link"
+                className="text-sm p-0"
                 onClick={handleSwitchToForgotPassword}
               >
                 Quên mật khẩu?
               </Button>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
+              {isLoading ? "Đang xử lý..." : "Đăng nhập"}
             </Button>
           </form>
 
@@ -163,27 +170,31 @@ function Login() {
             <span className="text-xs text-muted-foreground">Hoặc</span>
           </div>
 
-          <Button 
-            variant="outline" 
-            onClick={handleGoogleSignIn} 
+          <Button
+            variant="outline"
+            onClick={handleGoogleSignIn}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-2"
           >
             <FcGoogle className="w-5 h-5" />
-            {isLoading ? 'Đang xử lý...' : 'Đăng nhập với Google'}
+            {isLoading ? "Đang xử lý..." : "Đăng nhập với Google"}
           </Button>
-          
+
           <div className="text-center text-sm text-muted-foreground">
             Chưa có tài khoản?{" "}
-            <Button variant="link" className="p-0" onClick={handleSwitchToRegister}>
+            <Button
+              variant="link"
+              className="p-0"
+              onClick={handleSwitchToRegister}
+            >
               Đăng ký ngay
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Register 
-        open={showRegister} 
+      <Register
+        open={showRegister}
         onOpenChange={setShowRegister}
         onSwitchToLogin={handleSwitchToLogin}
       />
