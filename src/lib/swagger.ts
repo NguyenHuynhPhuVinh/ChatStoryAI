@@ -373,6 +373,223 @@ const options: swaggerJSDoc.Options = {
           },
           required: ["title", "summary", "status"],
         },
+        Notification: {
+          type: "object",
+          properties: {
+            notification_id: {
+              type: "integer",
+              description: "ID thông báo",
+            },
+            title: {
+              type: "string",
+              description: "Tiêu đề thông báo",
+            },
+            message: {
+              type: "string",
+              description: "Nội dung thông báo",
+            },
+            is_read: {
+              type: "boolean",
+              description: "Đã đọc hay chưa",
+            },
+            story_id: {
+              type: "integer",
+              description: "ID truyện liên quan",
+            },
+            chapter_id: {
+              type: "integer",
+              description: "ID chương liên quan",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian tạo",
+            },
+          },
+        },
+        Bookmark: {
+          type: "object",
+          properties: {
+            bookmark_id: {
+              type: "integer",
+              description: "ID bookmark",
+            },
+            story_id: {
+              type: "integer",
+              description: "ID truyện",
+            },
+            title: {
+              type: "string",
+              description: "Tiêu đề truyện",
+            },
+            cover_image: {
+              type: "string",
+              description: "Ảnh bìa truyện",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian bookmark",
+            },
+          },
+        },
+        ViewHistory: {
+          type: "object",
+          properties: {
+            history_id: {
+              type: "integer",
+              description: "ID lịch sử",
+            },
+            story_id: {
+              type: "integer",
+              description: "ID truyện",
+            },
+            chapter_id: {
+              type: "integer",
+              description: "ID chương",
+            },
+            title: {
+              type: "string",
+              description: "Tiêu đề truyện",
+            },
+            chapter_title: {
+              type: "string",
+              description: "Tiêu đề chương",
+            },
+            cover_image: {
+              type: "string",
+              description: "Ảnh bìa truyện",
+            },
+            viewed_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian xem",
+            },
+          },
+        },
+        Outline: {
+          type: "object",
+          properties: {
+            outline_id: {
+              type: "integer",
+              description: "ID đại cương",
+            },
+            title: {
+              type: "string",
+              description: "Tiêu đề đại cương",
+            },
+            description: {
+              type: "string",
+              description: "Mô tả đại cương",
+            },
+            order_number: {
+              type: "integer",
+              description: "Thứ tự sắp xếp",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian tạo",
+            },
+          },
+        },
+        Dialogue: {
+          type: "object",
+          properties: {
+            dialogue_id: {
+              type: "integer",
+              description: "ID hội thoại",
+            },
+            character_name: {
+              type: "string",
+              description: "Tên nhân vật",
+            },
+            content: {
+              type: "string",
+              description: "Nội dung hội thoại",
+            },
+            order_number: {
+              type: "integer",
+              description: "Thứ tự trong chương",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian tạo",
+            },
+          },
+        },
+        SubscribeRequest: {
+          type: "object",
+          properties: {
+            email: {
+              type: "string",
+              format: "email",
+              description: "Email đăng ký nhận thông tin",
+            },
+          },
+          required: ["email"],
+        },
+        UpdateUsernameRequest: {
+          type: "object",
+          properties: {
+            username: {
+              type: "string",
+              description: "Tên người dùng mới",
+            },
+          },
+          required: ["username"],
+        },
+        UpdatePasswordRequest: {
+          type: "object",
+          properties: {
+            currentPassword: {
+              type: "string",
+              description: "Mật khẩu hiện tại",
+            },
+            newPassword: {
+              type: "string",
+              description: "Mật khẩu mới",
+            },
+          },
+          required: ["currentPassword", "newPassword"],
+        },
+        CreateOutlineRequest: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              description: "Tiêu đề đại cương",
+            },
+            description: {
+              type: "string",
+              description: "Mô tả đại cương",
+            },
+            order_number: {
+              type: "integer",
+              description: "Thứ tự sắp xếp",
+            },
+          },
+          required: ["title", "description", "order_number"],
+        },
+        CreateDialogueRequest: {
+          type: "object",
+          properties: {
+            character_name: {
+              type: "string",
+              description: "Tên nhân vật",
+            },
+            content: {
+              type: "string",
+              description: "Nội dung hội thoại",
+            },
+            order_number: {
+              type: "integer",
+              description: "Thứ tự trong chương",
+            },
+          },
+          required: ["character_name", "content", "order_number"],
+        },
       },
     },
     security: [
