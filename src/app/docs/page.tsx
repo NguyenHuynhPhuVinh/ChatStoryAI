@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import gsap from "gsap";
 
 interface ApiEndpoint {
   path: string;
@@ -27,6 +28,10 @@ export default function DocsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [showContent, setShowContent] = useState(false);
+  const messageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const typingRef = useRef<HTMLDivElement>(null);
+  const loadingContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchSpec = async () => {
@@ -37,22 +42,149 @@ export default function DocsPage() {
         }
         const data = await response.json();
         setSpec(data);
+
+        // Fade out loading với animation
+        if (loadingContainerRef.current) {
+          gsap.to(loadingContainerRef.current, {
+            opacity: 0,
+            duration: 0.5,
+            onComplete: () => {
+              setLoading(false);
+              setShowContent(true);
+            },
+          });
+        } else {
+          setLoading(false);
+          setShowContent(true);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
-      } finally {
-        setLoading(false);
+        if (loadingContainerRef.current) {
+          gsap.to(loadingContainerRef.current, {
+            opacity: 0,
+            duration: 0.5,
+            onComplete: () => {
+              setLoading(false);
+            },
+          });
+        } else {
+          setLoading(false);
+        }
       }
     };
 
     fetchSpec();
   }, []);
 
+  // Loading animation effect
+  useEffect(() => {
+    if (loading) {
+      // Animation cho các tin nhắn
+      messageRefs.current.forEach((msg, index) => {
+        if (msg) {
+          gsap.fromTo(
+            msg,
+            {
+              x: index % 2 === 0 ? -50 : 50,
+              opacity: 0,
+            },
+            {
+              x: 0,
+              opacity: 1,
+              duration: 0.5,
+              delay: index * 0.3,
+              ease: "power2.out",
+            }
+          );
+        }
+      });
+
+      // Animation cho typing indicator
+      const dots = typingRef.current?.querySelectorAll(".typing-dot");
+      dots?.forEach((dot, index) => {
+        gsap.to(dot, {
+          scale: 1.2,
+          opacity: 1,
+          duration: 0.4,
+          delay: index * 0.2,
+          repeat: -1,
+          repeatDelay: 0.5,
+          yoyo: true,
+          ease: "power2.inOut",
+        });
+      });
+    }
+  }, [loading]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải API documentation...</p>
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center">
+        <div className="w-full max-w-md space-y-4 p-4">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-primary mb-2">
+              ChatStoryAI
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              đang tải API documentation...
+            </p>
+          </div>
+
+          {/* Loading messages */}
+          <div
+            ref={(el) => {
+              messageRefs.current[0] = el;
+            }}
+            className="flex items-start gap-2 opacity-0"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+              API
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none max-w-xs">
+              <p className="text-sm">Đang khởi tạo Swagger documentation...</p>
+            </div>
+          </div>
+
+          <div
+            ref={(el) => {
+              messageRefs.current[1] = el;
+            }}
+            className="flex items-start gap-2 opacity-0"
+          >
+            <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white font-medium">
+              DB
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none max-w-xs">
+              <p className="text-sm">Đang tải schemas và endpoints...</p>
+            </div>
+          </div>
+
+          <div
+            ref={(el) => {
+              messageRefs.current[2] = el;
+            }}
+            className="flex items-start justify-end gap-2 opacity-0"
+          >
+            <div className="bg-primary text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-xs">
+              <p className="text-sm">Sẵn sàng khám phá APIs! 🚀</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
+              U
+            </div>
+          </div>
+
+          {/* Typing indicator */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center text-white font-medium">
+              SW
+            </div>
+            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none">
+              <div ref={typingRef} className="flex gap-2">
+                <div className="typing-dot w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 opacity-50 scale-75" />
+                <div className="typing-dot w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 opacity-50 scale-75" />
+                <div className="typing-dot w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 opacity-50 scale-75" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -60,16 +192,43 @@ export default function DocsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">❌ Lỗi</div>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Thử lại
-          </button>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-full max-w-md space-y-4 p-4">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-primary mb-2">
+              ChatStoryAI
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              có lỗi xảy ra khi tải documentation
+            </p>
+          </div>
+
+          {/* Error message */}
+          <div className="flex items-start gap-2">
+            <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-medium">
+              ❌
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-2xl rounded-tl-none max-w-xs">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          </div>
+
+          {/* Retry button */}
+          <div className="flex items-start justify-end gap-2">
+            <div className="bg-primary text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-xs">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+              >
+                🔄 Thử lại
+              </Button>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
+              U
+            </div>
+          </div>
         </div>
       </div>
     );
