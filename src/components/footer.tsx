@@ -86,15 +86,6 @@ function Footer() {
             </button>
             <button
               onClick={() => {
-                startLoading("/products");
-                router.push("/products");
-              }}
-              className="hover:text-primary"
-            >
-              Sản phẩm
-            </button>
-            <button
-              onClick={() => {
                 startLoading("/contact");
                 router.push("/contact");
               }}
