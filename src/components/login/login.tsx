@@ -96,7 +96,13 @@ function Login() {
     <>
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
         <DialogTrigger asChild>
-          <NavButton variant="outline">Đăng nhập</NavButton>
+          <NavButton
+            variant="default"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+          >
+            <span className="text-sm">👋</span>
+            Đăng nhập
+          </NavButton>
         </DialogTrigger>
         <DialogContent>
           <div className="flex flex-col items-center gap-2">
