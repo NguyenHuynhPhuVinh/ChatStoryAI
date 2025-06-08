@@ -4,6 +4,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -426,10 +427,13 @@ export default function CreateCharacterContent({
                       transition-all duration-300 shadow-lg hover:shadow-xl`}
                     >
                       {previewImage ? (
-                        <img
+                        <Image
                           src={previewImage}
                           alt="Preview"
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="160px"
+                          className="object-cover"
+                          priority
                         />
                       ) : (
                         <Camera className="w-12 h-12 text-blue-500" />

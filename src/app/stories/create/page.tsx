@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -511,10 +512,13 @@ export default function CreateStoryPage() {
                   >
                     {previewImage ? (
                       <div className="relative aspect-[3/4] w-full">
-                        <img
+                        <Image
                           src={previewImage}
                           alt="Preview"
-                          className="rounded-2xl object-cover w-full h-full shadow-lg"
+                          fill
+                          sizes="350px"
+                          className="rounded-2xl object-cover shadow-lg"
+                          priority
                         />
                       </div>
                     ) : (
