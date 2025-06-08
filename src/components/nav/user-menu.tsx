@@ -249,7 +249,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           <div className="flex items-center gap-3">
             <div className="relative">
               <UserAvatar size={40} />
-              <div className="absolute bottom-5 -right-5 w-4 h-4 bg-green-400 rounded-full border-2 border-white dark:border-slate-900"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white dark:border-slate-900"></div>
             </div>
           </div>
         </div>
