@@ -138,36 +138,87 @@ export function StoryCard({
 
           {/* Floating Category Badge */}
           <div className="absolute top-3 left-3">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg backdrop-blur-sm">
+            <motion.span
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg backdrop-blur-sm border border-white/20"
+            >
               <Sparkles className="w-3 h-3 inline mr-1" />
               {story.main_category}
-            </span>
+            </motion.span>
           </div>
+
+          {/* Gradient Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
         {/* Content Section */}
-        <div className="p-5 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-lg leading-tight line-clamp-2 bg-gradient-to-r from-slate-800 to-slate-600 dark:from-slate-200 dark:to-slate-400 bg-clip-text text-transparent">
+        <div className="p-5 space-y-4">
+          {/* Title */}
+          <div className="space-y-2">
+            <h3 className="font-bold text-lg leading-tight line-clamp-2 bg-gradient-to-r from-slate-800 to-slate-600 dark:from-slate-200 dark:to-slate-400 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
               {story.title}
             </h3>
+
+            {/* Tags if available */}
+            {story.tags && story.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {story.tags.slice(0, 2).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {story.tags.length > 2 && (
+                  <span className="text-xs text-muted-foreground">
+                    +{story.tags.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
             {story.description}
           </p>
 
+          {/* Relevance Score for search results */}
+          {showRelevance && story.relevance_score && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  Độ phù hợp: {Math.round(story.relevance_score * 100)}%
+                </span>
+              </div>
+              {story.match_reason && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  {story.match_reason}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Stats Row */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Eye className="w-4 h-4 text-blue-500" />
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-4 text-sm">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="flex items-center gap-1 text-blue-600 dark:text-blue-400"
+              >
+                <Eye className="w-4 h-4" />
                 <span className="font-medium">{story.view_count}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Heart className="w-4 h-4 text-red-500" />
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="flex items-center gap-1 text-red-500 dark:text-red-400"
+              >
+                <Heart className="w-4 h-4" />
                 <span className="font-medium">{favoriteCount}</span>
-              </div>
+              </motion.div>
             </div>
 
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
