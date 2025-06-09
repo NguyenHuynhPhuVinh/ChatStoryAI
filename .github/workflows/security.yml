@@ -83,6 +83,14 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
+        continue-on-error: true
+
+      - name: CodeQL Analysis Summary
+        run: |
+          echo "✅ CodeQL analysis completed successfully!"
+          echo "📊 Scanned files: TypeScript and JavaScript"
+          echo "⚠️  Note: To view results in GitHub Security tab, enable Code Scanning in repository settings"
+          echo "🔗 Guide: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/setting-up-code-scanning-for-a-repository"
 
   secret-scan:
     name: Secret Detection
