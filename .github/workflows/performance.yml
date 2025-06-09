@@ -50,15 +50,30 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build and analyze bundle
-        run: |
-          npm run build
-          npx @next/bundle-analyzer
+      - name: Build application
+        run: npm run build
         env:
-          ANALYZE: true
           NEXT_TELEMETRY_DISABLED: 1
 
-      - name: Check bundle size
+      - name: Analyze bundle size
         run: |
-          echo "Checking bundle sizes..."
-          find .next/static -name "*.js" -exec ls -lh {} \; | head -20
+          echo "=== Bundle Size Analysis ==="
+          echo "Build completed successfully!"
+
+          if [ -d ".next" ]; then
+            echo "✅ .next directory exists"
+            ls -la .next/
+          else
+            echo "❌ .next directory not found"
+            exit 1
+          fi
+
+          if [ -d ".next/static" ]; then
+            echo "✅ Static files found"
+            echo "=== JavaScript files ==="
+            find .next/static -name "*.js" -exec ls -lh {} \; | head -10
+            echo "=== Total static size ==="
+            du -sh .next/static
+          else
+            echo "❌ No static files found"
+          fi
