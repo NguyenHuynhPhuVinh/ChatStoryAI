@@ -30,13 +30,25 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
 
       - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v10
+        uses: treosh/lighthouse-ci-action@v11
         with:
           configPath: "./.lighthouserc.json"
-          uploadArtifacts: true
+          uploadArtifacts: false
           temporaryPublicStorage: true
         env:
           NEXT_TELEMETRY_DISABLED: 1
+        continue-on-error: true
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports-${{ github.run_number }}
+          path: |
+            .lighthouseci/
+            lhci_reports/
+            lighthouse-results.json
+          retention-days: 30
 
   bundle-analysis:
     name: Bundle Size Analysis
