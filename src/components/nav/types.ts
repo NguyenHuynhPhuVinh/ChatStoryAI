@@ -1,17 +1,13 @@
 export interface NavItem {
-  to?: string;
-  text: string;
-  chatMessage?: string;
-  icon?: string;
+  to?: string
+  text: string
   items?: {
     icon?: {
-      dark: string;
-      light: string;
-    };
-    text: string;
-    description?: string;
-    to: string;
-    chatStyle?: boolean;
-    featured?: boolean;
-  }[];
-}
+      dark: string
+      light: string
+    }
+    text: string
+    description?: string
+    to: string
+  }[]
+} 

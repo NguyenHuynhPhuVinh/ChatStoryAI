@@ -1,17 +1,17 @@
-import { ChatHero } from "@/components/chat-hero";
-import { CreativeFeatures } from "@/components/creative-features";
-import { PricingSection } from "@/components/pricing-section";
-import { CreativeTestimonials } from "@/components/creative-testimonials";
-import { ChatCTA } from "@/components/chat-cta";
+import { Hero } from "@/components/hero";
+import { Features } from "@/components/features";
+import GeminiInfo from "@/components/gemini-info";
+import UserTestimonials from "@/components/user-testimonials";
+import AIAssistantInfo from "@/components/ai-assistant-info";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900">
-      <ChatHero />
-      <CreativeFeatures />
-      <CreativeTestimonials />
-      <PricingSection />
-      <ChatCTA />
+    <div>
+      <Hero />
+      <Features />
+      <GeminiInfo />
+      <AIAssistantInfo />
+      <UserTestimonials />
     </div>
   );
 }

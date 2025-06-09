@@ -1,47 +1,44 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { Message } from "@/lib/gemini-chat-config";
-import { chat } from "@/lib/gemini-chat";
-import { WelcomeScreen } from "./components/WelcomeScreen";
-import { ChatMessages } from "./components/ChatMessages";
-import { ChatInput } from "./components/ChatInput";
-import { ChatSidebar } from "./components/ChatSidebar";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import {
-  fetchChatHistory as fetchChatHistoryApi,
-  fetchChatMessages,
-  deleteChat,
-  saveMessage,
+import { useState, useRef, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { redirect } from "next/navigation"
+import { Message } from "@/lib/gemini-chat-config"
+import { chat } from "@/lib/gemini-chat"
+import { WelcomeScreen } from "./components/WelcomeScreen"
+import { ChatMessages } from "./components/ChatMessages"
+import { ChatInput } from "./components/ChatInput"
+import { ChatSidebar } from "./components/ChatSidebar"
+import { toast } from "sonner"
+import { 
+  fetchChatHistory as fetchChatHistoryApi, 
+  fetchChatMessages, 
+  deleteChat, 
+  saveMessage, 
   fetchCategories,
-  updateMessageStatus,
-} from "./api/chatApi";
-import { useCommandHandler } from "./components/CommandHandler";
-import { ChatHistory, Category, Tag, Story } from "./types";
+  updateMessageStatus
+} from './api/chatApi'
+import { useCommandHandler } from "./components/CommandHandler"
+import { ChatHistory, Category, Tag, Story } from './types'
 
 export default function AIPage() {
-  const { data: session } = useSession();
-  const isSupporter = session?.user?.hasBadge;
+  const { data: session } = useSession()
+  const isSupporter = session?.user?.hasBadge
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [commandStatus, setCommandStatus] = useState<
-    "loading" | "success" | "error" | null
-  >(null);
-  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null)
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([])
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
+  const [commandStatus, setCommandStatus] = useState<'loading' | 'success' | 'error' | null>(null)
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null)
 
   const {
     handleCreateStory,
@@ -59,153 +56,149 @@ export default function AIPage() {
     handleEditDialogue,
     handleDeleteDialogue,
     handlePublishStory,
-    handleDeleteStory,
+    handleDeleteStory
   } = useCommandHandler({
     selectedStory,
     setCommandStatus,
     messages,
     setMessages,
-    updateMessageStatus,
-  });
+    updateMessageStatus
+  })
 
   useEffect(() => {
     if (!isSupporter && messages.length > 0) {
-      redirect("/");
+      redirect('/')
     }
-  }, [isSupporter, messages]);
+  }, [isSupporter, messages])
 
   useEffect(() => {
     if (isSupporter) {
-      fetchChatHistory();
+      fetchChatHistory()
       // Lấy danh sách thể loại và tag
       const fetchData = async () => {
         try {
-          const data = await fetchCategories();
-          setCategories(data.mainCategories);
-          setTags(data.tags);
+          const data = await fetchCategories()
+          setCategories(data.mainCategories)
+          setTags(data.tags)
         } catch (error) {
-          console.error("Lỗi khi lấy dữ liệu:", error);
-          toast.error("Có lỗi xảy ra khi tải dữ liệu");
+          console.error("Lỗi khi lấy dữ liệu:", error)
+          toast.error("Có lỗi xảy ra khi tải dữ liệu")
         }
-      };
-      fetchData();
+      }
+      fetchData()
     }
-  }, [isSupporter]);
+  }, [isSupporter])
 
   const fetchChatHistory = async () => {
     try {
-      const history = await fetchChatHistoryApi();
-      setChatHistory(history);
+      const history = await fetchChatHistoryApi()
+      setChatHistory(history)
     } catch (error) {
-      console.error("Lỗi khi lấy lịch sử chat:", error);
+      console.error("Lỗi khi lấy lịch sử chat:", error)
     }
-  };
+  }
 
   const handleSelectChat = async (chatId: number) => {
     try {
-      const messages = await fetchChatMessages(chatId);
-      setMessages(messages);
-      setCurrentChatId(chatId);
+      const messages = await fetchChatMessages(chatId)
+      setMessages(messages)
+      setCurrentChatId(chatId)
     } catch (error) {
-      console.error("Lỗi khi lấy tin nhắn:", error);
+      console.error("Lỗi khi lấy tin nhắn:", error)
     }
-  };
+  }
 
   const handleNewChat = () => {
-    setMessages([]);
-    setCurrentChatId(null);
-  };
+    setMessages([])
+    setCurrentChatId(null)
+  }
 
   const handleDeleteChat = async (chatId: number) => {
     try {
-      await deleteChat(chatId);
-      await fetchChatHistory();
+      await deleteChat(chatId)
+      await fetchChatHistory()
       if (currentChatId === chatId) {
-        handleNewChat();
+        handleNewChat()
       }
-      toast.success("Đã xóa cuộc trò chuyện thành công");
+      toast.success('Đã xóa cuộc trò chuyện thành công')
     } catch (error) {
-      console.error("Lỗi khi xóa cuộc trò chuyện:", error);
-      toast.error("Không thể xóa cuộc trò chuyện. Vui lòng thử lại sau.");
+      console.error("Lỗi khi xóa cuộc trò chuyện:", error)
+      toast.error('Không thể xóa cuộc trò chuyện. Vui lòng thử lại sau.')
     }
-  };
+  }
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
-  };
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   const handleImageUpload = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setImageFiles((prev) => [...prev, file]);
-    setSelectedImages((prev) => [...prev, imageUrl]);
-  };
+    const imageUrl = URL.createObjectURL(file)
+    setImageFiles(prev => [...prev, file])
+    setSelectedImages(prev => [...prev, imageUrl])
+  }
 
   const handleClearImage = (index: number) => {
-    URL.revokeObjectURL(selectedImages[index]);
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+    URL.revokeObjectURL(selectedImages[index])
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+  }
 
   const handleClearAllImages = () => {
-    selectedImages.forEach((url) => URL.revokeObjectURL(url));
-    setSelectedImages([]);
-    setImageFiles([]);
-  };
+    selectedImages.forEach(url => URL.revokeObjectURL(url))
+    setSelectedImages([])
+    setImageFiles([])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    if (!isSupporter) return;
-    e.preventDefault();
-    if ((!input.trim() && !imageFiles.length) || isLoading) return;
-    const formData = new FormData();
-    imageFiles.forEach((file) => {
-      formData.append("images", file);
-    });
+    if (!isSupporter) return
+    e.preventDefault()
+    if ((!input.trim() && !imageFiles.length) || isLoading) return
+    const formData = new FormData()
+    imageFiles.forEach(file => {
+      formData.append('images', file)
+    })
     const userMessage: Message = {
       role: "user",
       content: input.trim(),
       images: selectedImages.map((url, index) => ({
         fileId: `temp-${index}`,
-        url,
-      })),
-    };
+        url
+      }))
+    }
 
     // Hiển thị tin nhắn người dùng ngay lập tức
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
+    setMessages(prev => [...prev, userMessage])
+    setInput("")
+    setIsLoading(true)
+    
     try {
       // Lưu tin nhắn người dùng và lấy chatId
-      const imageBuffers =
-        imageFiles.length > 0
-          ? await Promise.all(
-              imageFiles.map(async (file) => ({
-                buffer: Array.from(new Uint8Array(await file.arrayBuffer())),
-                mimeType: file.type,
-              }))
-            )
-          : undefined;
+      const imageBuffers = imageFiles.length > 0 
+        ? await Promise.all(imageFiles.map(async (file) => ({
+            buffer: Array.from(new Uint8Array(await file.arrayBuffer())),
+            mimeType: file.type
+          })))
+        : undefined
 
       // Lưu tin nhắn người dùng và đợi kết quả
       const userMessageResponse = await saveMessage(
-        currentChatId,
-        "user",
-        input.trim(),
+        currentChatId, 
+        "user", 
+        input.trim(), 
         imageBuffers,
         selectedStory?.story_id
-      );
-      const newChatId = userMessageResponse.chatId;
-      setCurrentChatId(newChatId);
+      )
+      const newChatId = userMessageResponse.chatId
+      setCurrentChatId(newChatId)
 
       // Thu thập toàn bộ phản hồi trước khi lưu
-      let fullResponse = "";
+      let fullResponse = ""
       const result = await chat(
         input,
         messages,
@@ -229,109 +222,55 @@ export default function AIPage() {
         handleDeleteDialogue,
         handlePublishStory,
         handleDeleteStory
-      );
-      const reader = result.getReader();
+      )
+      const reader = result.getReader()
       const assistantMessage: Message = {
         role: "assistant",
-        content: "",
-      };
+        content: ""
+      }
 
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        fullResponse += value;
-
+        const { done, value } = await reader.read()
+        if (done) break
+        
+        fullResponse += value
+        
         if (assistantMessage.content === "") {
-          assistantMessage.content = fullResponse;
-          setMessages((prev) => [...prev, assistantMessage]);
+          assistantMessage.content = fullResponse
+          setMessages(prev => [...prev, assistantMessage])
         } else {
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1].content = fullResponse;
-            return newMessages;
-          });
+          setMessages(prev => {
+            const newMessages = [...prev]
+            newMessages[newMessages.length - 1].content = fullResponse
+            return newMessages
+          })
         }
       }
 
       // Lưu toàn bộ phản hồi sau khi đã thu thập xong
       if (fullResponse !== "") {
-        const savedMessage = await saveMessage(
-          newChatId,
-          "assistant",
-          fullResponse
-        );
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1].id = savedMessage.messageId;
-          return newMessages;
-        });
+        const savedMessage = await saveMessage(newChatId, "assistant", fullResponse)
+        setMessages(prev => {
+          const newMessages = [...prev]
+          newMessages[newMessages.length - 1].id = savedMessage.messageId
+          return newMessages
+        })
       }
 
-      await fetchChatHistory();
+      await fetchChatHistory()
     } catch (error) {
-      console.error("Lỗi khi gửi tin nhắn:", error);
-      toast.error("Có lỗi xảy ra khi gửi tin nhắn");
+      console.error("Lỗi khi gửi tin nhắn:", error)
+      toast.error("Có lỗi xảy ra khi gửi tin nhắn")
       // Xóa tin nhắn người dùng nếu có lỗi
-      setMessages((prev) => prev.filter((msg) => msg !== userMessage));
+      setMessages(prev => prev.filter(msg => msg !== userMessage))
     } finally {
-      setIsLoading(false);
-      handleClearAllImages();
+      setIsLoading(false)
+      handleClearAllImages()
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 relative overflow-hidden">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-blue-900/20 dark:to-purple-900/20" />
-
-      {/* Floating Shapes */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute w-64 h-64 bg-blue-400/10 rounded-full blur-3xl"
-          style={{ top: "10%", left: "10%" }}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"
-          style={{ top: "50%", right: "10%" }}
-          animate={{
-            x: [0, -30, 0],
-            y: [0, 50, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute w-80 h-80 bg-indigo-400/10 rounded-full blur-3xl"
-          style={{ bottom: "10%", left: "20%" }}
-          animate={{
-            x: [0, 40, 0],
-            y: [0, -20, 0],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-
-      <div className="flex h-[calc(100vh-4rem)] relative z-10">
+    <div className="flex h-[calc(100vh-4rem)]">
         <ChatSidebar
           chatHistory={chatHistory}
           currentChatId={currentChatId}
@@ -373,6 +312,5 @@ export default function AIPage() {
           )}
         </div>
       </div>
-    </div>
-  );
+  )
 }

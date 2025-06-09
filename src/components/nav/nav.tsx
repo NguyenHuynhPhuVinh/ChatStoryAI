@@ -7,84 +7,68 @@ import { Login } from "../login/login";
 import { UserMenu } from "./user-menu";
 import { useRouter } from "next/navigation";
 import { NotificationBell } from "../notification-bell";
-
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { SearchDialog } from "../search-dialog";
 import { useLoading } from "@/providers/loading-provider";
 
-// Chat-themed menu items
+// Sample menu items
 const menuItems = [
   {
-    text: "🏠 Trang chủ",
+    text: "Trang chủ",
     to: "/",
-    chatMessage: "Chào mừng bạn đến với ChatStoryAI! 👋",
-    icon: "🏠",
   },
   {
-    text: "📚 Thư viện truyện",
-    chatMessage: "Khám phá kho tàng câu chuyện tuyệt vời! ✨",
-    icon: "📚",
+    text: "Thư viện",
     items: [
       {
-        text: "🆕 Truyện mới nhất",
-        description: "💬 Những câu chuyện vừa được tạo ra bởi cộng đồng",
+        text: "Truyện mới",
+        description: "Những truyện mới được tạo",
         to: "/library/new",
-        chatStyle: true,
       },
       {
-        text: "🔥 Đang thịnh hành",
-        description: "❤️ Những truyện được yêu thích nhất tuần này",
+        text: "Phổ biến",
+        description: "Những truyện được yêu thích nhất",
         to: "/library/popular",
-        chatStyle: true,
       },
       {
-        text: "🔍 Tìm kiếm nâng cao",
-        description: "🎯 Tìm kiếm truyện theo thể loại, tác giả, từ khóa...",
+        text: "Tìm kiếm",
+        description: "Tìm kiếm nâng cao",
         to: "/library/search",
-        chatStyle: true,
       },
     ],
   },
   {
-    text: "✍️ Sáng tác truyện",
-    chatMessage: "Hãy cùng tôi tạo ra câu chuyện tuyệt vời! 🚀",
-    icon: "✍️",
+    text: "Tạo truyện",
     items: [
       {
-        text: "🎨 Tạo bằng giao diện",
-        description: "🖱️ Sử dụng editor trực quan để viết truyện",
+        text: "Tạo bằng giao diện",
+        description: "Tạo truyện bằng giao diện trực quan",
         to: "/stories/create",
-        chatStyle: true,
       },
       {
-        text: "🤖 Trò chuyện với AI",
-        description: "💭 Để AI giúp bạn phát triển ý tưởng thành câu chuyện",
+        text: "Tạo bằng AI",
+        description: "Tạo truyện thông qua trò chuyện với AI",
         to: "/ai",
-        chatStyle: true,
-        featured: true,
       },
     ],
   },
   {
-    text: "💡 Hỗ trợ & Hướng dẫn",
-    chatMessage: "Tôi sẽ giúp bạn sử dụng ChatStoryAI hiệu quả! 🎓",
-    icon: "💡",
+    text: "Giá cả",
+    to: "/products",
+  },
+  {
+    text: "Hướng dẫn",
     items: [
       {
-        text: "📖 Cách sử dụng",
-        description: "🎯 Hướng dẫn từng bước để bắt đầu viết truyện",
+        text: "Cách sử dụng",
+        description: "Hướng dẫn sử dụng cơ bản",
         to: "/guide/basic",
-        chatStyle: true,
       },
       {
-        text: "❓ Câu hỏi thường gặp",
-        description: "💬 Giải đáp những thắc mắc phổ biến",
+        text: "Câu hỏi thường gặp",
+        description: "Các câu hỏi thường gặp",
         to: "/guide/faq",
-        chatStyle: true,
-      },
-      {
-        text: "📞 Liên hệ hỗ trợ",
-        description: "🆘 Cần giúp đỡ? Chúng tôi luôn sẵn sàng!",
-        to: "/contact",
-        chatStyle: true,
       },
     ],
   },
@@ -95,7 +79,7 @@ const Nav = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const [theme, setTheme] = React.useState<"light" | "dark">("light");
-
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const { startLoading } = useLoading();
 
   React.useEffect(() => {
@@ -119,6 +103,7 @@ const Nav = () => {
 
   return (
     <>
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
       <div
         className={`w-full ${
           theme === "dark" ? "dark bg-[#0B0C0F]" : "bg-white"
@@ -129,21 +114,26 @@ const Nav = () => {
           logo={
             <button
               onClick={handleLogoClick}
-              className="flex items-center gap-2 text-xl font-bold transition-all duration-300 group"
+              className={`text-xl font-bold ${
+                theme === "dark" ? "text-white" : "text-black"
+              }`}
             >
-              <span className="text-2xl group-hover:animate-bounce">💬</span>
-              <span className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700">
-                ChatStoryAI
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              </span>
+              ChatStoryAI
             </button>
           }
           menuItems={menuItems}
           onThemeChange={toggleTheme}
           isSticky={true}
-          isStickyOverlay={true}
+          withBorder={true}
           rightContent={
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search className="w-5 h-5" />
+              </Button>
               {session ? (
                 <>
                   <NotificationBell />
