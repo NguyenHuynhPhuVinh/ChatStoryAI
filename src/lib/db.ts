@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mysql from "mysql2/promise";
 
 // Hàm helper để xử lý nội dung chứng chỉ từ biến môi trường
