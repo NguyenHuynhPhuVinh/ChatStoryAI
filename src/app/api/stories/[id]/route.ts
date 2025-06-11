@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 import { GoogleDriveService } from "@/services/google-drive.service";
 
@@ -15,6 +14,7 @@ import { GoogleDriveService } from "@/services/google-drive.service";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -52,20 +52,14 @@ import { GoogleDriveService } from "@/services/google-drive.service";
  *               $ref: '#/components/schemas/Error'
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     // Lấy thông tin truyện
     const [stories] = (await pool.execute(
@@ -99,7 +93,11 @@ export async function GET(
     story.tags = story.tags ? story.tags.split(",") : [];
 
     return NextResponse.json({ story });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi lấy thông tin truyện:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }
@@ -115,6 +113,7 @@ export async function GET(
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -175,20 +174,14 @@ export async function GET(
  *               $ref: '#/components/schemas/Error'
  */
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const formData = await request.formData();
     const title = formData.get("title") as string;
@@ -206,11 +199,6 @@ export async function PUT(
 
       // Upload ảnh mới nếu có
       if (coverImage) {
-        const [users] = (await connection.execute(
-          "SELECT user_id FROM users WHERE email = ?",
-          [session.user.email]
-        )) as any[];
-
         // Lấy thông tin ảnh cũ trước
         const [oldStory] = (await connection.execute(
           "SELECT cover_file_id FROM stories WHERE story_id = ?",
@@ -222,7 +210,7 @@ export async function PUT(
         const { directLink, fileId } = await GoogleDriveService.uploadFile(
           buffer,
           coverImage.type,
-          users[0].user_id,
+          user.user_id,
           "cover",
           parseInt(id)
         );
@@ -280,7 +268,11 @@ export async function PUT(
     } finally {
       connection.release();
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi cập nhật truyện:", error);
     return NextResponse.json(
       { error: "Đã có lỗi xảy ra khi cập nhật truyện" },
@@ -299,6 +291,7 @@ export async function PUT(
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -331,19 +324,14 @@ export async function PUT(
  *               $ref: '#/components/schemas/Error'
  */
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const { id } = resolvedParams;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+
+    const user = await requireAuth(request);
 
     const storyId = id;
     const connection = await pool.getConnection();
@@ -449,7 +437,11 @@ export async function DELETE(
     } finally {
       connection.release();
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi xóa truyện:", error);
     return NextResponse.json(
       { error: "Đã có lỗi xảy ra khi xóa truyện" },

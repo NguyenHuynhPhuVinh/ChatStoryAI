@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 import { GoogleDriveService } from "@/services/google-drive.service";
 import { ResultSetHeader } from "mysql2";
@@ -16,6 +15,7 @@ import { ResultSetHeader } from "mysql2";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -54,6 +54,7 @@ import { ResultSetHeader } from "mysql2";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -135,20 +136,14 @@ import { ResultSetHeader } from "mysql2";
  *               $ref: '#/components/schemas/Error'
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const [characters] = (await pool.execute(
       `
@@ -170,7 +165,11 @@ export async function GET(
     )) as any[];
 
     return NextResponse.json({ characters });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi lấy danh sách nhân vật:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }
@@ -178,20 +177,14 @@ export async function GET(
 
 // POST - Tạo nhân vật mới
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
   const { id: storyId } = resolvedParams;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const formData = await request.formData();
     const name = formData.get("name") as string;
@@ -264,7 +257,11 @@ export async function POST(
     }
 
     return NextResponse.json({ message: "Tạo nhân vật thành công" });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi tạo nhân vật:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }

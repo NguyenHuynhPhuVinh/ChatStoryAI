@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 
 /**
@@ -14,6 +13,7 @@ import pool from "@/lib/db";
  *       - Chapters
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -54,7 +54,7 @@ import pool from "@/lib/db";
  */
 // GET - Lấy danh sách chương
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
@@ -63,13 +63,7 @@ export async function GET(
   const status = searchParams.get("status");
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     let query = `
       SELECT 
@@ -101,7 +95,11 @@ export async function GET(
     const [chapters] = (await pool.execute(query, queryParams)) as any[];
 
     return NextResponse.json({ chapters });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi lấy danh sách chương:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }
@@ -117,6 +115,7 @@ export async function GET(
  *       - Chapters
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -171,10 +170,12 @@ export async function GET(
  */
 // POST - Tạo chương mới
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth(request);
+
     const resolvedParams = await params;
     const { id } = resolvedParams;
     const { title, summary, status } = await request.json();
@@ -232,7 +233,11 @@ export async function POST(
     } finally {
       connection.release();
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi tạo chương mới:", error);
     return NextResponse.json(
       { error: "Đã có lỗi xảy ra khi tạo chương mới" },

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 
 /**
@@ -15,6 +14,7 @@ import pool from "@/lib/db";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -52,6 +52,7 @@ import pool from "@/lib/db";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -87,69 +88,51 @@ import pool from "@/lib/db";
  *               $ref: '#/components/schemas/Error'
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
-
-    const [users] = (await pool.execute(
-      "SELECT user_id FROM users WHERE email = ?",
-      [session.user.email]
-    )) as any[];
+    const user = await requireAuth(request);
 
     const [bookmarks] = (await pool.execute(
       "SELECT * FROM story_bookmarks WHERE user_id = ? AND story_id = ?",
-      [users[0].user_id, id]
+      [user.user_id, id]
     )) as any[];
 
     return NextResponse.json({
       isBookmarked: bookmarks.length > 0,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
-
-    const [users] = (await pool.execute(
-      "SELECT user_id FROM users WHERE email = ?",
-      [session.user.email]
-    )) as any[];
+    const user = await requireAuth(request);
 
     const [bookmarks] = (await pool.execute(
       "SELECT * FROM story_bookmarks WHERE user_id = ? AND story_id = ?",
-      [users[0].user_id, id]
+      [user.user_id, id]
     )) as any[];
 
     if (bookmarks.length > 0) {
       await pool.execute(
         "DELETE FROM story_bookmarks WHERE user_id = ? AND story_id = ?",
-        [users[0].user_id, id]
+        [user.user_id, id]
       );
       return NextResponse.json({
         message: "Đã bỏ lưu truyện",
@@ -159,14 +142,18 @@ export async function POST(
 
     await pool.execute(
       "INSERT INTO story_bookmarks (user_id, story_id, created_at) VALUES (?, ?, NOW())",
-      [users[0].user_id, id]
+      [user.user_id, id]
     );
 
     return NextResponse.json({
       message: "Đã lưu truyện",
       isBookmarked: true,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi thao tác bookmark:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }

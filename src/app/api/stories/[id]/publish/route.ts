@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 
 /**
@@ -13,6 +12,7 @@ import pool from "@/lib/db";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -51,20 +51,14 @@ import pool from "@/lib/db";
  *               $ref: '#/components/schemas/Error'
  */
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await context.params;
   const { id } = resolvedParams;
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     // Kiểm tra điều kiện xuất bản
     const [chapters] = (await pool.execute(
@@ -88,7 +82,11 @@ export async function PUT(
     );
 
     return NextResponse.json({ message: "Xuất bản truyện thành công" });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi xuất bản truyện:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }

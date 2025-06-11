@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 import { GoogleDriveService } from "@/services/google-drive.service";
 
@@ -15,6 +14,7 @@ import { GoogleDriveService } from "@/services/google-drive.service";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -70,15 +70,9 @@ import { GoogleDriveService } from "@/services/google-drive.service";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const formData = await request.formData();
     const title = formData.get("title") as string;
@@ -87,13 +81,7 @@ export async function POST(request: Request) {
     const tagIds = JSON.parse(formData.get("tagIds") as string);
     const coverImage = formData.get("coverImage") as File;
 
-    // Lấy user_id từ email
-    const [users] = (await pool.execute(
-      "SELECT user_id FROM users WHERE email = ?",
-      [session.user.email]
-    )) as any[];
-
-    const userId = users[0].user_id;
+    const userId = user.user_id;
     const connection = await pool.getConnection();
 
     try {
@@ -153,7 +141,11 @@ export async function POST(request: Request) {
     } finally {
       connection.release();
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi tạo truyện:", error);
     return NextResponse.json(
       { error: "Đã có lỗi xảy ra khi tạo truyện" },
