@@ -37,6 +37,11 @@ const options: swaggerJSDoc.Options = {
           in: "cookie",
           name: "next-auth.session-token",
         },
+        apiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "X-API-Key",
+        },
       },
       schemas: {
         Error: {
@@ -529,6 +534,50 @@ const options: swaggerJSDoc.Options = {
             },
           },
           required: ["email"],
+        },
+        ApiKey: {
+          type: "object",
+          properties: {
+            id: {
+              type: "integer",
+              description: "ID của API key",
+            },
+            user_id: {
+              type: "integer",
+              description: "ID người dùng sở hữu",
+            },
+            name: {
+              type: "string",
+              description: "Tên của API key",
+            },
+            description: {
+              type: "string",
+              description: "Mô tả API key",
+            },
+            api_key_preview: {
+              type: "string",
+              description: "Preview của API key (ẩn phần lớn)",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian tạo",
+            },
+            expires_at: {
+              type: "string",
+              format: "date-time",
+              description: "Thời gian hết hạn",
+            },
+            last_used_at: {
+              type: "string",
+              format: "date-time",
+              description: "Lần sử dụng cuối",
+            },
+            is_active: {
+              type: "boolean",
+              description: "Trạng thái hoạt động",
+            },
+          },
         },
         UpdateUsernameRequest: {
           type: "object",

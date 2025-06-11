@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 
 /**
  * @swagger
@@ -12,6 +12,7 @@ import { authOptions } from "@/lib/auth";
  *       - AI
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: API key Gemini
@@ -36,15 +37,9 @@ import { authOptions } from "@/lib/auth";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
+    await requireAuth(request);
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -55,7 +50,11 @@ export async function GET() {
     }
 
     return NextResponse.json({ apiKey });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi lấy API key:", error);
     return NextResponse.json({ error: "Đã có lỗi xảy ra" }, { status: 500 });
   }

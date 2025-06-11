@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-key-auth";
 import pool from "@/lib/db";
 
 /**
@@ -14,6 +13,7 @@ import pool from "@/lib/db";
  *       - Stories
  *     security:
  *       - sessionAuth: []
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Danh sách truyện
@@ -39,27 +39,10 @@ import pool from "@/lib/db";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Không có quyền truy cập" },
-        { status: 401 }
-      );
-    }
-
-    // Lấy user_id từ email
-    const [users] = (await pool.execute(
-      "SELECT user_id FROM users WHERE email = ?",
-      [session.user.email]
-    )) as any[];
-
-    if (!users.length) {
-      return NextResponse.json({ stories: [] });
-    }
-
-    const userId = users[0].user_id;
+    const user = await requireAuth(request);
+    const userId = user.user_id;
 
     // Lấy danh sách truyện
     const [stories] = (await pool.execute(
@@ -95,7 +78,11 @@ export async function GET() {
     }));
 
     return NextResponse.json({ stories: formattedStories });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
+    }
+
     console.error("Lỗi khi lấy danh sách truyện:", error);
     return NextResponse.json(
       { error: "Đã có lỗi xảy ra khi lấy danh sách truyện" },
