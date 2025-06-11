@@ -58,7 +58,7 @@ export async function PUT(
   const { id } = resolvedParams;
 
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     // Kiểm tra điều kiện xuất bản
     const [chapters] = (await pool.execute(
@@ -82,8 +82,8 @@ export async function PUT(
     );
 
     return NextResponse.json({ message: "Xuất bản truyện thành công" });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
     }
 

@@ -143,7 +143,7 @@ export async function GET(
   const { id } = resolvedParams;
 
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const [characters] = (await pool.execute(
       `
@@ -184,7 +184,7 @@ export async function POST(
   const { id: storyId } = resolvedParams;
 
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const formData = await request.formData();
     const name = formData.get("name") as string;

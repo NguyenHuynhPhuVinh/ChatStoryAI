@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; outlineId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { outlineId } = resolvedParams;
@@ -51,7 +51,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; outlineId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { outlineId } = resolvedParams;
@@ -90,7 +90,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; outlineId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { outlineId } = resolvedParams;

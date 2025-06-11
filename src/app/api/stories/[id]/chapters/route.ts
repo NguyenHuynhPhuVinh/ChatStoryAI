@@ -63,7 +63,7 @@ export async function GET(
   const status = searchParams.get("status");
 
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     let query = `
       SELECT 
@@ -174,7 +174,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { id } = resolvedParams;

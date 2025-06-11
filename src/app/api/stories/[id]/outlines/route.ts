@@ -89,7 +89,7 @@ export async function GET(
   const { id } = resolvedParams;
 
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const [outlines] = (await pool.execute(
       `
@@ -123,7 +123,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { id } = resolvedParams;

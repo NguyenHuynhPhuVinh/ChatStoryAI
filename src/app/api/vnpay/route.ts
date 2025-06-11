@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { dateFormat, ProductCode, VNPay, VnpLocale } from "vnpay";
 
 const vnpayInstance = new VNPay({

@@ -8,7 +8,7 @@ export async function PUT(
   { params }: { params: Promise<{ dialogueId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { dialogueId } = resolvedParams;
@@ -21,8 +21,8 @@ export async function PUT(
     );
 
     return NextResponse.json({ message: "Cập nhật dialogue thành công" });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
     }
 
@@ -37,7 +37,7 @@ export async function DELETE(
   { params }: { params: Promise<{ dialogueId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { dialogueId } = resolvedParams;
@@ -47,8 +47,8 @@ export async function DELETE(
     ]);
 
     return NextResponse.json({ message: "Xóa dialogue thành công" });
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Chưa xác thực" }, { status: 401 });
     }
 

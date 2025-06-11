@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { chapterId } = resolvedParams;
@@ -41,7 +41,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { chapterId } = resolvedParams;

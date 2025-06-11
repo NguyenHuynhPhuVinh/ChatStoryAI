@@ -59,7 +59,7 @@ export async function GET(
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     // Lấy thông tin truyện
     const [stories] = (await pool.execute(
@@ -331,7 +331,7 @@ export async function DELETE(
     const resolvedParams = await params;
     const { id } = resolvedParams;
 
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const storyId = id;
     const connection = await pool.getConnection();

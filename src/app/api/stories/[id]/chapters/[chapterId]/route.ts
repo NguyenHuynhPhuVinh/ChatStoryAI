@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { chapterId } = resolvedParams;
@@ -52,7 +52,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { id: storyId, chapterId } = resolvedParams;
@@ -178,7 +178,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const user = await requireAuth(request);
+    await requireAuth(request);
 
     const resolvedParams = await params;
     const { chapterId } = resolvedParams;
