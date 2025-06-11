@@ -49,12 +49,15 @@ export async function POST(
     const data = await request.json();
     const { character_id, content, order_number, type = "dialogue" } = data;
 
+    // Xử lý character_id cho narration
+    const finalCharacterId = type === "narration" ? null : character_id;
+
     const [result] = (await pool.execute(
       `
       INSERT INTO chapter_dialogues (chapter_id, character_id, content, order_number, type)
       VALUES (?, ?, ?, ?, ?)
     `,
-      [chapterId, character_id, content, order_number, type]
+      [chapterId, finalCharacterId, content, order_number, type]
     )) as any[];
 
     const [dialogue] = (await pool.execute(
