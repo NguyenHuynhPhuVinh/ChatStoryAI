@@ -1,4 +1,3 @@
- 
 import {
   checkDatabaseHealth,
   handleGracefulFailure,
@@ -12,11 +11,13 @@ import {
   UserCreationResult,
   CreationVerificationResult,
 } from "./db-creation";
+import { runMigrations, MigrationSystemResult } from "./db-migration";
 
 // Startup initialization configuration
 export interface StartupConfig {
   enableDatabaseHealthCheck: boolean;
   enableDatabaseCreation: boolean; // New option for automatic database creation
+  enableMigrationExecution: boolean; // New option for automatic migration execution
   healthCheckTimeout: number; // milliseconds
   gracefulFailureConfig: Partial<GracefulFailureConfig>;
   skipOnProduction?: boolean;
@@ -27,12 +28,18 @@ export interface StartupConfig {
     password?: string;
     host?: string;
   };
+  migrationOptions?: {
+    skipFailedScripts?: boolean;
+    dryRun?: boolean;
+    migrationDirectory?: string;
+  };
 }
 
 // Default startup configuration
 const DEFAULT_STARTUP_CONFIG: StartupConfig = {
   enableDatabaseHealthCheck: true,
   enableDatabaseCreation: true, // Enable automatic database creation by default
+  enableMigrationExecution: true, // Enable automatic migration execution by default
   healthCheckTimeout: 10000, // 10 seconds
   gracefulFailureConfig: {
     enableFallback: true,
@@ -43,6 +50,10 @@ const DEFAULT_STARTUP_CONFIG: StartupConfig = {
   logLevel: "detailed",
   databaseCreationOptions: {
     skipUserCreation: false,
+  },
+  migrationOptions: {
+    skipFailedScripts: false,
+    dryRun: false,
   },
 };
 
@@ -57,6 +68,7 @@ let lastDatabaseCreationResult: {
   overallSuccess: boolean;
   summary: string;
 } | null = null;
+let lastMigrationResult: MigrationSystemResult | null = null;
 
 /**
  * Main startup initialization function
@@ -131,8 +143,71 @@ async function performStartupInitialization(
         }
       } catch (creationError) {
         console.error("[STARTUP] ❌ Database creation failed:", creationError);
-        // Continue with health check even if creation fails
+        // Continue with migration execution even if creation fails
       }
+    }
+
+    // Step 0.5: Migration Execution (if enabled and database creation succeeded)
+    if (
+      config.enableMigrationExecution &&
+      (!lastDatabaseCreationResult || lastDatabaseCreationResult.overallSuccess)
+    ) {
+      console.log("[STARTUP] 🔄 Running database migrations...");
+
+      try {
+        const migrationResult = await runMigrations(
+          config.migrationOptions?.migrationDirectory,
+          {
+            skipFailedScripts:
+              config.migrationOptions?.skipFailedScripts || false,
+            dryRun: config.migrationOptions?.dryRun || false,
+          }
+        );
+        lastMigrationResult = migrationResult;
+
+        if (config.logLevel === "detailed") {
+          console.log("[STARTUP] 📋 Migration summary:", {
+            totalScripts: migrationResult.totalScripts,
+            executedScripts: migrationResult.executedScripts,
+            skippedScripts: migrationResult.skippedScripts,
+            failedScripts: migrationResult.failedScripts,
+            executionTime: migrationResult.totalExecutionTime,
+          });
+        }
+
+        if (!migrationResult.success) {
+          console.warn(
+            "[STARTUP] ⚠️ Migration execution completed with issues, continuing with health check..."
+          );
+          if (
+            migrationResult.errors.length > 0 &&
+            config.logLevel === "detailed"
+          ) {
+            console.warn(
+              "[STARTUP] Migration errors:",
+              migrationResult.errors.map((e) => e.message)
+            );
+          }
+        } else {
+          console.log(
+            `[STARTUP] ✅ Migration execution completed successfully (${migrationResult.executedScripts}/${migrationResult.totalScripts} scripts executed)`
+          );
+        }
+      } catch (migrationError) {
+        console.error(
+          "[STARTUP] ❌ Migration execution failed:",
+          migrationError
+        );
+        // Continue with health check even if migration fails
+      }
+    } else if (
+      config.enableMigrationExecution &&
+      lastDatabaseCreationResult &&
+      !lastDatabaseCreationResult.overallSuccess
+    ) {
+      console.warn(
+        "[STARTUP] ⚠️ Skipping migration execution due to database creation issues"
+      );
     }
 
     // Step 1: Database Health Check
@@ -279,6 +354,13 @@ export function getLastDatabaseCreationResult(): typeof lastDatabaseCreationResu
 }
 
 /**
+ * Get the last migration result
+ */
+export function getLastMigrationResult(): MigrationSystemResult | null {
+  return lastMigrationResult;
+}
+
+/**
  * Check if startup initialization is complete
  */
 export function isStartupInitialized(): boolean {
@@ -293,6 +375,7 @@ export function resetStartupState(): void {
   startupPromise = null;
   lastHealthCheckResult = null;
   lastDatabaseCreationResult = null;
+  lastMigrationResult = null;
 }
 
 /**
@@ -302,6 +385,7 @@ export function getStartupConfigFromEnv(): Partial<StartupConfig> {
   return {
     enableDatabaseHealthCheck: process.env.DB_HEALTH_CHECK_ENABLED !== "false",
     enableDatabaseCreation: process.env.DB_AUTO_CREATE_ENABLED !== "false", // Enable by default
+    enableMigrationExecution: process.env.DB_MIGRATION_ENABLED !== "false", // Enable by default
     healthCheckTimeout: parseInt(
       process.env.DB_HEALTH_CHECK_TIMEOUT || "10000"
     ),
@@ -324,6 +408,11 @@ export function getStartupConfigFromEnv(): Partial<StartupConfig> {
       username: process.env.DB_CREATE_USERNAME,
       password: process.env.DB_CREATE_PASSWORD,
       host: process.env.DB_CREATE_HOST,
+    },
+    migrationOptions: {
+      skipFailedScripts: process.env.DB_MIGRATION_SKIP_FAILED === "true",
+      dryRun: process.env.DB_MIGRATION_DRY_RUN === "true",
+      migrationDirectory: process.env.DB_MIGRATION_DIRECTORY,
     },
   };
 }
