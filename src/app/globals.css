@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -59,7 +57,7 @@
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
   * {
     @apply border-border outline-ring/50;
@@ -125,23 +123,22 @@
   }
 }
 
-@layer utilities {
-  .backdrop-blur-navbar {
-    backdrop-filter: blur(12px);
-  }
+@utility backdrop-blur-navbar {
+  backdrop-filter: blur(12px);
+}
+
+@utility animate-gradient-xy {
+  animation: gradient-xy 3s ease infinite;
 }
 
 @keyframes gradient-xy {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg);
   }
   50% {
     transform: rotate(360deg);
   }
-}
-
-.animate-gradient-xy {
-  animation: gradient-xy 3s ease infinite;
 }
 
 @keyframes floatParticle {
