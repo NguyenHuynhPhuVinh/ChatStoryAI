@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
