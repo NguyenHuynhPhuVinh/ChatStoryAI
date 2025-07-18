@@ -599,7 +599,7 @@ class StartupLogger {
 }
 
 // Global startup logger instance
-let startupLogger = new StartupLogger();
+const startupLogger = new StartupLogger();
 
 /**
  * Get the current startup logger instance
