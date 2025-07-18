@@ -10,14 +10,14 @@ const nextConfig: NextConfig = {
       "placehold.co",
     ],
   },
-  // Exclude directories from build and watch
-  webpack: (config, { isServer }) => {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ["**/.bmad-core/**", "**/mcp/**", "**/docs/**"],
-    };
-    return config;
+  // Cấu hình cho Turbopack (stable)
+  turbopack: {
+    // Cấu hình resolve alias
+    resolveAlias: {
+      // Có thể thêm alias nếu cần
+    },
   },
+
   async rewrites() {
     return [
       {
