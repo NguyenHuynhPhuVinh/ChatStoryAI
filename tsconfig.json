@@ -23,13 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    ".bmad-core/**/*",
-    "mcp/**/*",
-    "docs/**/*",
-    ".ai/**/*",
-    "database/**/*",
-    "docker/**/*"
-  ]
+  "exclude": ["node_modules"]
 }

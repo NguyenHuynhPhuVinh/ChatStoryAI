@@ -1,1 +1,0 @@
-md-tree explode docs/architecture.md docs/architecture
