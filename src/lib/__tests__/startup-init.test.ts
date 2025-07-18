@@ -1114,4 +1114,177 @@ describe("Startup Initialization", () => {
       expect(getLastHealthCheckResult()).toBeNull();
     });
   });
+
+  describe("Additional Coverage Tests", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      resetStartupState();
+    });
+
+    it("should handle configuration validation errors", () => {
+      // Create invalid configuration directly
+      const invalidConfig: StartupConfig = {
+        initMode: "development",
+        autoInitEnabled: true,
+        enableDatabaseHealthCheck: true,
+        enableDatabaseCreation: true,
+        enableMigrationExecution: true,
+        logLevel: "detailed",
+        initTimeout: -1000, // Invalid negative timeout
+        healthCheckTimeout: -500, // Invalid negative timeout
+        migrationTimeout: -2000, // Invalid negative timeout
+        healthCheckRetryDelay: -100, // Invalid negative delay
+        retryAttempts: -5, // Invalid negative attempts
+        retryDelay: -1000, // Invalid negative delay
+        gracefulFailureConfig: {
+          enableFallback: true,
+          fallbackBehavior: "continue",
+        },
+      };
+
+      const validation = validateStartupConfig(invalidConfig);
+
+      expect(validation.isValid).toBe(false);
+      expect(validation.errors.length).toBeGreaterThan(0);
+    });
+
+    it("should handle configuration validation warnings", () => {
+      // Set configuration that triggers warnings
+      process.env.DB_INIT_TIMEOUT = "1000"; // Very short timeout
+      process.env.DB_HEALTH_CHECK_RETRY_DELAY = "100"; // Very short delay
+
+      const config = getStartupConfigFromEnv();
+      // Ensure all required properties are present
+      const fullConfig: StartupConfig = {
+        autoInitEnabled: true,
+        initMode: "development",
+        enableDatabaseHealthCheck: true,
+        enableDatabaseCreation: true,
+        enableMigrationExecution: true,
+        healthCheckTimeout: 5000,
+        initTimeout: 30000,
+        healthCheckRetryDelay: 1000,
+        migrationTimeout: 60000,
+        retryAttempts: 3,
+        retryDelay: 2000,
+        logLevel: "detailed",
+        gracefulFailureConfig: {
+          enableFallback: true,
+          fallbackBehavior: "continue",
+        },
+        ...config,
+      };
+      const validation = validateStartupConfig(fullConfig);
+
+      expect(validation.warnings.length).toBeGreaterThan(0);
+    });
+
+    it("should test initializeForMiddleware success", async () => {
+      const healthyResult = {
+        isHealthy: true,
+        connectionStatus: {
+          isConnected: true,
+          retryAttempts: 1,
+          maxRetries: 5,
+        },
+        versionCheck: {
+          isCompatible: true,
+          currentVersion: "8.0.35",
+          requiredVersion: "8.0.0",
+        },
+        permissionsCheck: {
+          hasAllPermissions: true,
+          permissions: {},
+          missingPermissions: [],
+        },
+        errors: [],
+        timestamp: new Date(),
+        totalCheckTime: 500,
+      };
+
+      mockCheckDatabaseHealth.mockResolvedValue(healthyResult);
+
+      const { initializeForMiddleware } = require("../startup-init");
+      const result = await initializeForMiddleware();
+
+      expect(result).toBe(true);
+    });
+
+    it("should test initializeForMiddleware failure", async () => {
+      mockCheckDatabaseHealth.mockRejectedValue(new Error("Database error"));
+
+      const { initializeForMiddleware } = require("../startup-init");
+      const result = await initializeForMiddleware();
+
+      expect(result).toBe(false);
+    });
+
+    it("should test ensureInitialized when not initialized", async () => {
+      const healthyResult = {
+        isHealthy: true,
+        connectionStatus: {
+          isConnected: true,
+          retryAttempts: 1,
+          maxRetries: 5,
+        },
+        versionCheck: {
+          isCompatible: true,
+          currentVersion: "8.0.35",
+          requiredVersion: "8.0.0",
+        },
+        permissionsCheck: {
+          hasAllPermissions: true,
+          permissions: {},
+          missingPermissions: [],
+        },
+        errors: [],
+        timestamp: new Date(),
+        totalCheckTime: 500,
+      };
+
+      mockCheckDatabaseHealth.mockResolvedValue(healthyResult);
+
+      const { ensureInitialized } = require("../startup-init");
+      await ensureInitialized();
+
+      expect(isStartupInitialized()).toBe(true);
+    });
+
+    it("should test ensureInitialized when already initialized", async () => {
+      // First initialize
+      const healthyResult = {
+        isHealthy: true,
+        connectionStatus: {
+          isConnected: true,
+          retryAttempts: 1,
+          maxRetries: 5,
+        },
+        versionCheck: {
+          isCompatible: true,
+          currentVersion: "8.0.35",
+          requiredVersion: "8.0.0",
+        },
+        permissionsCheck: {
+          hasAllPermissions: true,
+          permissions: {},
+          missingPermissions: [],
+        },
+        errors: [],
+        timestamp: new Date(),
+        totalCheckTime: 500,
+      };
+
+      mockCheckDatabaseHealth.mockResolvedValue(healthyResult);
+      await initializeApplication();
+
+      // Clear mocks to ensure ensureInitialized doesn't call initialization again
+      jest.clearAllMocks();
+
+      const { ensureInitialized } = require("../startup-init");
+      await ensureInitialized();
+
+      // Should not call checkDatabaseHealth again
+      expect(mockCheckDatabaseHealth).not.toHaveBeenCalled();
+    });
+  });
 });

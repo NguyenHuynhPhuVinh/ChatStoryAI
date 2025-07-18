@@ -9,7 +9,12 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathIgnorePatterns=real-integration",
+    "test:integration": "jest --testPathPatterns=real-integration",
+    "test:integration:setup": "docker-compose -f docker-compose.test.yml up -d mysql-test",
+    "test:integration:teardown": "docker-compose -f docker-compose.test.yml down",
+    "test:integration:full": "npm run test:integration:setup && npm run test:integration && npm run test:integration:teardown"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
