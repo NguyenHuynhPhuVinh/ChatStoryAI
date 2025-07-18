@@ -1,0 +1,28 @@
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# Development tools
+.bmad-core/
+mcp/
+docs/
+.ai/
+database/
+docker/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+.cache/

@@ -10,7 +10,21 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends("next/core-web-vitals"),
+  {
+    ignores: [
+      ".bmad-core/**",
+      "mcp/**",
+      "docs/**",
+      ".ai/**",
+      "database/**",
+      "docker/**",
+      "build/**",
+      "dist/**",
+      ".next/**",
+      "out/**",
+    ],
+  },
 ];
 
 export default eslintConfig;

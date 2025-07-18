@@ -8,3 +8,21 @@ docker-compose.yml
 README.md
 .gitignore
 *.log
+
+# Development tools and documentation
+.bmad-core/
+mcp/
+docs/
+.ai/
+database/migrations/
+docker/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing and coverage
+coverage/
+.nyc_output/
