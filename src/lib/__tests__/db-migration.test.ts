@@ -10,6 +10,7 @@ import {
   getScriptsToExecute,
   getMigrationHistory,
   runMigrations,
+  filterSkippedScripts,
   MIGRATION_CONFIG,
   MigrationScript,
   MigrationExecutionResult,
@@ -524,6 +525,126 @@ describe("DB Migration System", () => {
       expect(result.success).toBe(true);
       expect(result.totalScripts).toBe(1);
       expect(result.executedScripts).toBe(0); // No scripts actually executed in dry run
+    });
+  });
+
+  describe("filterSkippedScripts", () => {
+    const mockScripts: MigrationScript[] = [
+      {
+        filename: "01-create-users.sql",
+        fullPath: "/path/01-create-users.sql",
+        order: 1,
+        content: "CREATE TABLE users...",
+        checksum: "abc123",
+      },
+      {
+        filename: "02-test-data.sql",
+        fullPath: "/path/02-test-data.sql",
+        order: 2,
+        content: "INSERT INTO users...",
+        checksum: "def456",
+      },
+      {
+        filename: "03-demo-setup.sql",
+        fullPath: "/path/03-demo-setup.sql",
+        order: 3,
+        content: "INSERT INTO demo...",
+        checksum: "ghi789",
+      },
+      {
+        filename: "04-production.sql",
+        fullPath: "/path/04-production.sql",
+        order: 4,
+        content: "CREATE INDEX...",
+        checksum: "jkl012",
+      },
+    ];
+
+    it("should return all scripts when no skip options provided", () => {
+      const result = filterSkippedScripts(mockScripts);
+
+      expect(result.filteredScripts).toHaveLength(4);
+      expect(result.skippedScripts).toHaveLength(0);
+      expect(result.filteredScripts).toEqual(mockScripts);
+    });
+
+    it("should skip scripts by explicit names", () => {
+      const result = filterSkippedScripts(mockScripts, [
+        "02-test-data.sql",
+        "03-demo-setup.sql",
+      ]);
+
+      expect(result.filteredScripts).toHaveLength(2);
+      expect(result.skippedScripts).toHaveLength(2);
+      expect(result.filteredScripts.map((s) => s.filename)).toEqual([
+        "01-create-users.sql",
+        "04-production.sql",
+      ]);
+      expect(result.skippedScripts.map((s) => s.filename)).toEqual([
+        "02-test-data.sql",
+        "03-demo-setup.sql",
+      ]);
+    });
+
+    it("should skip scripts by regex pattern", () => {
+      const result = filterSkippedScripts(mockScripts, undefined, "test|demo");
+
+      expect(result.filteredScripts).toHaveLength(2);
+      expect(result.skippedScripts).toHaveLength(2);
+      expect(result.filteredScripts.map((s) => s.filename)).toEqual([
+        "01-create-users.sql",
+        "04-production.sql",
+      ]);
+      expect(result.skippedScripts.map((s) => s.filename)).toEqual([
+        "02-test-data.sql",
+        "03-demo-setup.sql",
+      ]);
+    });
+
+    it("should skip scripts by both names and pattern", () => {
+      const result = filterSkippedScripts(
+        mockScripts,
+        ["01-create-users.sql"],
+        "demo"
+      );
+
+      expect(result.filteredScripts).toHaveLength(2);
+      expect(result.skippedScripts).toHaveLength(2);
+      expect(result.filteredScripts.map((s) => s.filename)).toEqual([
+        "02-test-data.sql",
+        "04-production.sql",
+      ]);
+      expect(result.skippedScripts.map((s) => s.filename)).toEqual([
+        "01-create-users.sql",
+        "03-demo-setup.sql",
+      ]);
+    });
+
+    it("should handle case-insensitive regex patterns", () => {
+      const result = filterSkippedScripts(mockScripts, undefined, "TEST");
+
+      expect(result.filteredScripts).toHaveLength(3);
+      expect(result.skippedScripts).toHaveLength(1);
+      expect(result.skippedScripts[0].filename).toBe("02-test-data.sql");
+    });
+
+    it("should handle invalid regex patterns gracefully", () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+
+      const result = filterSkippedScripts(mockScripts, undefined, "[invalid");
+
+      // Should return all scripts when regex is invalid
+      expect(result.filteredScripts).toHaveLength(4);
+      expect(result.skippedScripts).toHaveLength(0);
+
+      consoleSpy.mockRestore();
+    });
+
+    it("should handle empty skip arrays", () => {
+      const result = filterSkippedScripts(mockScripts, []);
+
+      expect(result.filteredScripts).toHaveLength(4);
+      expect(result.skippedScripts).toHaveLength(0);
     });
   });
 });

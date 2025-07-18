@@ -184,6 +184,75 @@ export async function discoverMigrationScripts(
 }
 
 /**
+ * Filter migration scripts based on skip options
+ * Supports both explicit script names and regex patterns
+ */
+export function filterSkippedScripts(
+  scripts: MigrationScript[],
+  skipScripts?: string[],
+  skipPattern?: string
+): { filteredScripts: MigrationScript[]; skippedScripts: MigrationScript[] } {
+  const filteredScripts: MigrationScript[] = [];
+  const skippedScripts: MigrationScript[] = [];
+
+  // Compile regex pattern if provided
+  let skipRegex: RegExp | null = null;
+  if (skipPattern) {
+    try {
+      skipRegex = new RegExp(skipPattern, "i"); // Case-insensitive by default
+    } catch (error) {
+      migrationLogger.logError({
+        type: "discovery",
+        message: `Invalid skip pattern regex: ${skipPattern}`,
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date(),
+      });
+      // Continue without regex filtering if pattern is invalid
+    }
+  }
+
+  for (const script of scripts) {
+    let shouldSkip = false;
+    let skipReason = "";
+
+    // Check if script name is in skipScripts array
+    if (skipScripts && skipScripts.includes(script.filename)) {
+      shouldSkip = true;
+      skipReason = "explicit_name_match";
+    }
+
+    // Check if script matches skip pattern
+    if (!shouldSkip && skipRegex && skipRegex.test(script.filename)) {
+      shouldSkip = true;
+      skipReason = "pattern_match";
+    }
+
+    if (shouldSkip) {
+      skippedScripts.push(script);
+      migrationLogger.logExecution("skipped", script.filename, {
+        reason: skipReason,
+        skipPattern: skipPattern,
+        skipScripts: skipScripts,
+      });
+    } else {
+      filteredScripts.push(script);
+    }
+  }
+
+  migrationLogger.logDiscovery("complete", "script_filtering", {
+    totalScripts: scripts.length,
+    filteredScripts: filteredScripts.length,
+    skippedScripts: skippedScripts.length,
+    skipOptions: {
+      skipScripts: skipScripts || [],
+      skipPattern: skipPattern || null,
+    },
+  });
+
+  return { filteredScripts, skippedScripts };
+}
+
+/**
  * Load content from a SQL script file
  * Includes file size validation and encoding handling
  */
@@ -992,6 +1061,8 @@ export async function runMigrations(
     skipFailedScripts?: boolean;
     dryRun?: boolean;
     forceRerun?: boolean;
+    skipScripts?: string[];
+    skipPattern?: string;
   } = {}
 ): Promise<MigrationSystemResult> {
   const startTime = Date.now();
@@ -1020,13 +1091,27 @@ export async function runMigrations(
     connection = await pool.getConnection();
 
     // Step 1: Discover migration scripts
-    const scripts = await discoverMigrationScripts(migrationDir);
-    result.totalScripts = scripts.length;
+    const allScripts = await discoverMigrationScripts(migrationDir);
+
+    // Step 1.5: Filter scripts based on skip options
+    const { filteredScripts: scripts, skippedScripts } = filterSkippedScripts(
+      allScripts,
+      options.skipScripts,
+      options.skipPattern
+    );
+
+    result.totalScripts = allScripts.length;
+    result.skippedScripts = skippedScripts.length;
 
     if (scripts.length === 0) {
       migrationLogger.logExecution("complete", "migration_system", {
-        message: "No migration scripts found",
+        message:
+          allScripts.length === 0
+            ? "No migration scripts found"
+            : "All migration scripts were skipped",
         directory: migrationDir,
+        totalScripts: allScripts.length,
+        skippedScripts: skippedScripts.length,
       });
       result.success = true;
       result.totalExecutionTime = Date.now() - startTime;
@@ -1064,7 +1149,8 @@ export async function runMigrations(
       scripts,
       nonNullConnection
     );
-    result.skippedScripts = toSkip.length;
+    // Total skipped = scripts skipped by configuration + scripts skipped by execution status
+    result.skippedScripts = skippedScripts.length + toSkip.length;
 
     if (changed.length > 0) {
       migrationLogger.logExecution("executing", "migration_system", {

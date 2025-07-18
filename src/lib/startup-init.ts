@@ -15,10 +15,15 @@ import { runMigrations, MigrationSystemResult } from "./db-migration";
 
 // Startup initialization configuration
 export interface StartupConfig {
+  autoInitEnabled: boolean; // Master switch for entire initialization process
+  initMode: "development" | "production" | "test"; // Initialization mode
   enableDatabaseHealthCheck: boolean;
   enableDatabaseCreation: boolean; // New option for automatic database creation
   enableMigrationExecution: boolean; // New option for automatic migration execution
   healthCheckTimeout: number; // milliseconds
+  initTimeout: number; // Overall initialization timeout in milliseconds
+  healthCheckRetryDelay: number; // Health check retry interval in milliseconds
+  migrationTimeout: number; // Migration execution timeout in milliseconds
   gracefulFailureConfig: Partial<GracefulFailureConfig>;
   skipOnProduction?: boolean;
   logLevel: "minimal" | "detailed";
@@ -32,15 +37,21 @@ export interface StartupConfig {
     skipFailedScripts?: boolean;
     dryRun?: boolean;
     migrationDirectory?: string;
+    skipScripts?: string[]; // Array of script names to skip
+    skipPattern?: string; // Regex pattern for scripts to skip
   };
 }
 
 // Default startup configuration
 const DEFAULT_STARTUP_CONFIG: StartupConfig = {
+  autoInitEnabled: true, // Enable automatic initialization by default
   enableDatabaseHealthCheck: true,
   enableDatabaseCreation: true, // Enable automatic database creation by default
   enableMigrationExecution: true, // Enable automatic migration execution by default
   healthCheckTimeout: 10000, // 10 seconds
+  initTimeout: 60000, // 60 seconds for overall initialization
+  healthCheckRetryDelay: 2000, // 2 seconds between health check retries
+  migrationTimeout: 300000, // 5 minutes for migration execution
   gracefulFailureConfig: {
     enableFallback: true,
     fallbackBehavior: "continue",
@@ -88,6 +99,15 @@ export async function initializeApplication(
 
   const finalConfig = { ...DEFAULT_STARTUP_CONFIG, ...config };
 
+  // Skip if auto-initialization is disabled
+  if (!finalConfig.autoInitEnabled) {
+    console.log(
+      "[STARTUP] Auto-initialization disabled via DB_AUTO_INIT=false"
+    );
+    isStartupComplete = true;
+    return true;
+  }
+
   // Skip in production if configured
   if (finalConfig.skipOnProduction && process.env.NODE_ENV === "production") {
     console.log("[STARTUP] Skipping database health check in production");
@@ -114,6 +134,50 @@ async function performStartupInitialization(
 ): Promise<boolean> {
   const startTime = Date.now();
 
+  // Create overall initialization timeout
+  const initializationPromise = performActualInitialization(config, startTime);
+  const timeoutPromise = new Promise<boolean>((_, reject) => {
+    setTimeout(
+      () =>
+        reject(
+          new Error(`Initialization timeout after ${config.initTimeout}ms`)
+        ),
+      config.initTimeout
+    );
+  });
+
+  try {
+    return await Promise.race([initializationPromise, timeoutPromise]);
+  } catch (error) {
+    console.error(
+      "[STARTUP] 💥 Fatal error during application initialization:",
+      error
+    );
+
+    // Check if we should crash on failure
+    if (lastHealthCheckResult) {
+      const shouldCrash = shouldCrashOnFailure(
+        lastHealthCheckResult,
+        config.gracefulFailureConfig
+      );
+      if (!shouldCrash) {
+        console.warn("[STARTUP] ⚠️  Continuing despite initialization errors");
+        isStartupComplete = true;
+        return false;
+      }
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Perform the actual startup initialization without timeout wrapper
+ */
+async function performActualInitialization(
+  config: StartupConfig,
+  startTime: number
+): Promise<boolean> {
   try {
     console.log("[STARTUP] 🚀 Starting application initialization...");
 
@@ -161,6 +225,8 @@ async function performStartupInitialization(
             skipFailedScripts:
               config.migrationOptions?.skipFailedScripts || false,
             dryRun: config.migrationOptions?.dryRun || false,
+            skipScripts: config.migrationOptions?.skipScripts,
+            skipPattern: config.migrationOptions?.skipPattern,
           }
         );
         lastMigrationResult = migrationResult;
@@ -317,24 +383,7 @@ async function performStartupInitialization(
       }
     }
   } catch (error) {
-    console.error(
-      "[STARTUP] 💥 Fatal error during application initialization:",
-      error
-    );
-
-    // Check if we should crash on failure
-    if (lastHealthCheckResult) {
-      const shouldCrash = shouldCrashOnFailure(
-        lastHealthCheckResult,
-        config.gracefulFailureConfig
-      );
-      if (!shouldCrash) {
-        console.warn("[STARTUP] ⚠️  Continuing despite initialization errors");
-        isStartupComplete = true;
-        return false;
-      }
-    }
-
+    // Re-throw error to be handled by the timeout wrapper
     throw error;
   }
 }
@@ -382,12 +431,68 @@ export function resetStartupState(): void {
  * Environment variable configuration helper
  */
 export function getStartupConfigFromEnv(): Partial<StartupConfig> {
+  // Parse DB_AUTO_INIT with validation and default value handling
+  const autoInitValue = process.env.DB_AUTO_INIT;
+  let autoInitEnabled = true; // Default to true
+
+  if (autoInitValue !== undefined) {
+    if (autoInitValue.toLowerCase() === "false" || autoInitValue === "0") {
+      autoInitEnabled = false;
+    } else if (
+      autoInitValue.toLowerCase() === "true" ||
+      autoInitValue === "1"
+    ) {
+      autoInitEnabled = true;
+    } else {
+      console.warn(
+        `[STARTUP] Invalid DB_AUTO_INIT value: "${autoInitValue}". Using default: true. Valid values: true, false, 1, 0`
+      );
+    }
+  }
+
+  // Parse timeout values with validation
+  const parseTimeout = (
+    envVar: string | undefined,
+    defaultValue: number,
+    name: string
+  ): number => {
+    if (!envVar) return defaultValue;
+
+    const parsed = parseInt(envVar);
+    if (isNaN(parsed) || parsed <= 0) {
+      console.warn(
+        `[STARTUP] Invalid ${name} value: "${envVar}". Using default: ${defaultValue}ms. Must be a positive number.`
+      );
+      return defaultValue;
+    }
+
+    return parsed;
+  };
+
   return {
+    autoInitEnabled,
     enableDatabaseHealthCheck: process.env.DB_HEALTH_CHECK_ENABLED !== "false",
     enableDatabaseCreation: process.env.DB_AUTO_CREATE_ENABLED !== "false", // Enable by default
     enableMigrationExecution: process.env.DB_MIGRATION_ENABLED !== "false", // Enable by default
-    healthCheckTimeout: parseInt(
-      process.env.DB_HEALTH_CHECK_TIMEOUT || "10000"
+    healthCheckTimeout: parseTimeout(
+      process.env.DB_HEALTH_CHECK_TIMEOUT,
+      10000,
+      "DB_HEALTH_CHECK_TIMEOUT"
+    ),
+    initTimeout: parseTimeout(
+      process.env.DB_INIT_TIMEOUT,
+      60000,
+      "DB_INIT_TIMEOUT"
+    ),
+    healthCheckRetryDelay: parseTimeout(
+      process.env.DB_HEALTH_CHECK_RETRY_DELAY,
+      2000,
+      "DB_HEALTH_CHECK_RETRY_DELAY"
+    ),
+    migrationTimeout: parseTimeout(
+      process.env.DB_MIGRATION_TIMEOUT,
+      300000,
+      "DB_MIGRATION_TIMEOUT"
     ),
     skipOnProduction: process.env.DB_HEALTH_CHECK_SKIP_PRODUCTION === "true",
     logLevel:
@@ -413,6 +518,16 @@ export function getStartupConfigFromEnv(): Partial<StartupConfig> {
       skipFailedScripts: process.env.DB_MIGRATION_SKIP_FAILED === "true",
       dryRun: process.env.DB_MIGRATION_DRY_RUN === "true",
       migrationDirectory: process.env.DB_MIGRATION_DIRECTORY,
+      skipScripts: process.env.DB_MIGRATION_SKIP_SCRIPTS
+        ? (() => {
+            const scripts = process.env
+              .DB_MIGRATION_SKIP_SCRIPTS!.split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            return scripts.length > 0 ? scripts : undefined;
+          })()
+        : undefined,
+      skipPattern: process.env.DB_MIGRATION_SKIP_PATTERN || undefined,
     },
   };
 }
